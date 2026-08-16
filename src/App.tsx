@@ -7,10 +7,26 @@ import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
 import Brightness4Icon from '@mui/icons-material/Brightness4';
 import Brightness7Icon from '@mui/icons-material/Brightness7';
-import PrintIcon from '@mui/icons-material/Print';
 import { BrowserRouter, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
-import { Chat as ChatExercise } from './katas/kata-01-basic-chat/Chat';
-import { Chat as ChatSolution } from './katas/kata-01-basic-chat/Chat.solution';
+import { Chat as ChatHello } from './challenges/challenge.hello';
+import { Chat as ChatMemory } from './challenges/challenge.memory';
+import { Chat as ChatTool } from './challenges/challenge.tool';
+import { Chat as ChatInput } from './challenges/challenge.input';
+import { Chat as ChatLoop } from './challenges/challenge.loop';
+import { Chat as ChatMcp } from './challenges/challenge.mcp';
+import { Chat as ChatSolution } from './challenges/Solution';
+import { Chat as ChatCanvas } from './challenges/Exercise';
+
+const TABS = [
+  { label: 'Canvas', path: '/' },
+  { label: 'Hello', path: '/hello' },
+  { label: 'Memory', path: '/memory' },
+  { label: 'Tool', path: '/tool' },
+  { label: 'Input', path: '/input' },
+  { label: 'Loop', path: '/loop' },
+  { label: 'MCP', path: '/mcp-challenge' },
+  { label: 'Solution', path: '/solution' },
+];
 
 interface LayoutProps {
   mode: 'light' | 'dark';
@@ -20,28 +36,28 @@ interface LayoutProps {
 function Layout({ mode, onToggleTheme }: LayoutProps) {
   const navigate = useNavigate();
   const location = useLocation();
-  const tab = location.pathname === '/solution' ? 1 : 0;
+  const tab = TABS.findIndex((t) => t.path === location.pathname);
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
       <AppBar position="fixed">
         <Toolbar>
           <Typography variant="h6" noWrap sx={{ mr: 4 }}>
-            AI Kata
+            BrowserAgent
           </Typography>
           <Tabs
-            value={tab}
-            onChange={(_, v) => navigate(v === 1 ? '/solution' : '/')}
+            value={tab === -1 ? 0 : tab}
+            onChange={(_, v) => navigate(TABS[v].path)}
             textColor="inherit"
             indicatorColor="secondary"
+            variant="scrollable"
+            scrollButtons="auto"
           >
-            <Tab label="Exercise" />
-            <Tab label="Solution" />
+            {TABS.map((t) => (
+              <Tab key={t.path} label={t.label} />
+            ))}
           </Tabs>
           <Box sx={{ flexGrow: 1 }} />
-          <IconButton color="inherit" onClick={() => window.print()} aria-label="print conversation">
-            <PrintIcon />
-          </IconButton>
           <IconButton color="inherit" onClick={onToggleTheme} aria-label="toggle theme">
             {mode === 'dark' ? <Brightness7Icon /> : <Brightness4Icon />}
           </IconButton>
@@ -51,7 +67,13 @@ function Layout({ mode, onToggleTheme }: LayoutProps) {
       <Toolbar />
       <Box sx={{ flexGrow: 1, overflow: 'hidden' }}>
         <Routes>
-          <Route path="/" element={<ChatExercise />} />
+          <Route path="/" element={<ChatCanvas />} />
+          <Route path="/hello" element={<ChatHello />} />
+          <Route path="/memory" element={<ChatMemory />} />
+          <Route path="/tool" element={<ChatTool />} />
+          <Route path="/input" element={<ChatInput />} />
+          <Route path="/loop" element={<ChatLoop />} />
+          <Route path="/mcp-challenge" element={<ChatMcp />} />
           <Route path="/solution" element={<ChatSolution />} />
         </Routes>
       </Box>

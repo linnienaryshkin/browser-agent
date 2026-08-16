@@ -8,6 +8,8 @@ import App from './App';
 declare global {
   interface Window {
     toggleTheme: () => void;
+    getTheme: () => 'light' | 'dark';
+    setTheme: (mode: 'light' | 'dark') => void;
   }
 }
 
@@ -40,9 +42,21 @@ function Root() {
     return () => window.removeEventListener('popstate', handler);
   }, []);
 
+  const getTheme = useCallback(() => mode, [mode]);
+
+  const setTheme = useCallback((target: 'light' | 'dark') => {
+    setMode((prev) => {
+      if (prev === target) return prev;
+      setUrlMode(target);
+      return target;
+    });
+  }, []);
+
   useEffect(() => {
     window.toggleTheme = toggle;
-  }, [toggle]);
+    window.getTheme = getTheme;
+    window.setTheme = setTheme;
+  }, [toggle, getTheme, setTheme]);
 
   return (
     <ThemeProvider theme={makeTheme(mode)}>

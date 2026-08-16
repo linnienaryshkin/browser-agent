@@ -1,8 +1,17 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import { mcpLampMiddleware } from './src/mcp-lamp-server'
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+    {
+      name: 'mcp-lamp-server',
+      configureServer(server) {
+        server.middlewares.use(mcpLampMiddleware());
+      },
+    },
+  ],
   envPrefix: ['ANTHROPIC_'],
   server: {
     proxy: {
