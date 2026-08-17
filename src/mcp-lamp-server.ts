@@ -14,7 +14,12 @@ const TOOLS = [
   },
 ];
 
-function handleRequest(body: { jsonrpc: string; id?: number | string; method: string; params?: Record<string, unknown> }) {
+function handleRequest(body: {
+  jsonrpc: string;
+  id?: number | string;
+  method: string;
+  params?: Record<string, unknown>;
+}) {
   const { id, method, params } = body;
 
   switch (method) {
@@ -48,7 +53,12 @@ function handleRequest(body: { jsonrpc: string; id?: number | string; method: st
           jsonrpc: '2.0',
           id,
           result: {
-            content: [{ type: 'text', text: JSON.stringify({ username: info.username, homedir: info.homedir }) }],
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify({ username: info.username, homedir: info.homedir }),
+              },
+            ],
           },
         };
       }
@@ -74,7 +84,9 @@ export function mcpLampMiddleware(): Connect.NextHandleFunction {
     if (req.url !== '/mcp' || req.method !== 'POST') return next();
 
     let body = '';
-    req.on('data', (chunk: Buffer) => { body += chunk.toString(); });
+    req.on('data', (chunk: Buffer) => {
+      body += chunk.toString();
+    });
     req.on('end', () => {
       try {
         const parsed = JSON.parse(body);
@@ -90,7 +102,13 @@ export function mcpLampMiddleware(): Connect.NextHandleFunction {
         res.end(JSON.stringify(response));
       } catch {
         res.writeHead(400, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ jsonrpc: '2.0', id: null, error: { code: -32700, message: 'Parse error' } }));
+        res.end(
+          JSON.stringify({
+            jsonrpc: '2.0',
+            id: null,
+            error: { code: -32700, message: 'Parse error' },
+          }),
+        );
       }
     });
   };

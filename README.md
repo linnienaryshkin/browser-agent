@@ -24,11 +24,10 @@ npm run dev            # http://localhost:5173
 | ----- | ------ | ---------------- |
 | Hello | First message | Create an Anthropic client, send a message, display the reply |
 | Memory | Context | Pass full history so the model remembers prior turns |
-| Tool | Tool use | Define `get_theme`, handle `stop_reason: 'tool_use'`, agent loop |
+| Tool | Tool use | Define `get_theme`, handle `stop_reason: 'tool_use'`, execute tools |
 | Input | Input schema | Add `set_theme` with structured input (`{ theme: "light" | "dark" }`) |
-| Loop | Multi-step | Toggle theme = get then set — multiple tool rounds per request |
+| Loop | Multi-step | Multiple tool calls in one request with a `while` loop |
 | MCP | Remote tools | Discover and call tools from a local MCP server via Streamable HTTP |
-| Solution | Complete | All features combined |
 
 ## Scripts
 

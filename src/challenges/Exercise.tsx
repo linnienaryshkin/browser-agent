@@ -20,56 +20,17 @@ export function Chat() {
   const [loading, setLoading] = useState(false);
 
   const handleSend = async () => {
-    try {
-      const userMessage: MessageParam = { role: 'user', content: input.trim() };
-
-      if (!userMessage.content || loading) return;
-
-      /**
-       * ───────────────────────────────────────────────────────────────────────
-       * TASK 1: First message
-       * Send a user message to the Anthropic API and display the reply in the chat.
-       *
-       * Your code here...
-       * ───────────────────────────────────────────────────────────────────────
-       */
-
-      const history: MessageParam[] = [...messages, userMessage];
-      setMessages(history);
+      try {
+      const text = input.trim();
+      if (!text || loading) return;
+  
+      const userMessage: MessageParam = { role: 'user', content: text };
+      setMessages((prev) => [...prev, userMessage]);
       setInput('');
       setLoading(true);
-
-      /**
-       * ───────────────────────────────────────────────────────────────────────
-       * TASK 2: Context management
-       * Make the model aware of earlier turns so the conversation feels continuous.
-       *
-       * Your code here...
-       * ───────────────────────────────────────────────────────────────────────
-       */
-
-      /**
-       * ───────────────────────────────────────────────────────────────────────
-       * TASK 3: Tool use — agent loop
-       * Let the model toggle the app theme by calling window.toggleTheme?.().
-       * Give it a tool, run the agent loop, and produce a final reply.
-       *
-       * Your code here...
-       * ───────────────────────────────────────────────────────────────────────
-       */
-
-      /**
-       * ───────────────────────────────────────────────────────────────────────
-       * TASK 4: Multi-tool response
-       * Add a second tool that prints the conversation via window.print().
-       * The model may call both tools in one response — handle that correctly.
-       *
-       * Your code here...
-       * ───────────────────────────────────────────────────────────────────────
-       */
-    } finally {
-      setLoading(false);
-    }
+      } finally {
+        setLoading(false);
+      }
   };
 
   const renderMessageContent = (msg: MessageParam) => {

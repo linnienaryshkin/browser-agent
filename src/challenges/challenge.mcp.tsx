@@ -1,3 +1,83 @@
+/**
+ * ╔══════════════════════════════════════════════════════════════════════════════╗
+ * ║  Challenge: MCP                                                            ║
+ * ║  Discover and integrate remote tools via Model Context Protocol (MCP)      ║
+ * ╚══════════════════════════════════════════════════════════════════════════════╝
+ *
+ * GOAL: Connect to a local MCP server to discover remote tools, add them to
+ *       the agent's toolset, and call them alongside local tools.
+ *
+ * ┌─────────────────────────────────────────────────────────────────────────────┐
+ * │  MCP Overview                                                               │
+ * │                                                                             │
+ * │  MCP (Model Context Protocol) is a standard for AI agents to discover and   │
+ * │  use tools from any server, not just your app.                              │
+ * │                                                                             │
+ * │  ┌─────────────┐       ┌──────────────┐       ┌──────────────┐             │
+ * │  │   Browser   │───────│ Vite Proxy   │───────│ MCP Server   │             │
+ * │  │  (client)   │       │  (POST /mcp) │       │  (local)     │             │
+ * │  └─────────────┘       └──────────────┘       └──────────────┘             │
+ * │                                                                             │
+ * │  1. Client: tools/list RPC call                                             │
+ * │  2. Server: Returns [{ name, description, inputSchema }, ...]              │
+ * │  3. Client: Converts to Anthropic SDK format                               │
+ * │  4. Client: Includes in tools array with local tools                       │
+ * └─────────────────────────────────────────────────────────────────────────────┘
+ *
+ * ┌─────────────────────────────────────────────────────────────────────────────┐
+ * │  MCP Protocol (JSON-RPC 2.0)                                                │
+ * │                                                                             │
+ * │  Request:                                                                   │
+ * │  {                                                                          │
+ * │    jsonrpc: "2.0",                                                          │
+ * │    id: 1,                                                                   │
+ * │    method: "tools/list",           ◀── MCP server exposes tools/list       │
+ * │    params: {}                                                               │
+ * │  }                                                                          │
+ * │                                                                             │
+ * │  Response:                                                                  │
+ * │  {                                                                          │
+ * │    jsonrpc: "2.0",                                                          │
+ * │    id: 1,                                                                   │
+ * │    result: {                                                                │
+ * │      tools: [                                                               │
+ * │        { name: "get_real_name", description: "...", inputSchema: {} }      │
+ * │      ]                                                                      │
+ * │    }                                                                        │
+ * │  }                                                                          │
+ * └─────────────────────────────────────────────────────────────────────────────┘
+ *
+ * ┌─────────────────────────────────────────────────────────────────────────────┐
+ * │  Integration Pattern                                                        │
+ * │                                                                             │
+ * │  const localTools: Anthropic.Tool[] = [get_theme, set_theme];               │
+ * │  const mcpTools = await discoverMcpTools();                                 │
+ * │  const allTools = [...localTools, ...mcpTools];                             │
+ * │                                                                             │
+ * │  When executing:                                                            │
+ * │  • If tool is in LOCAL_TOOL_NAMES → executeLocalTool(...)                  │
+ * │  • Else → callMcpTool(...) via RPC                                          │
+ * │                                                                             │
+ * │  The model doesn't care where tools come from — it just sees their         │
+ * │  schemas and decides when to call them.                                     │
+ * └─────────────────────────────────────────────────────────────────────────────┘
+ *
+ * ┌─────────────────────────────────────────────────────────────────────────────┐
+ * │  What This Teaches                                                          │
+ * │                                                                             │
+ * │  • Tool Discovery: Agents can dynamically learn what's available           │
+ * │  • Composition: Mix local and remote tools seamlessly                       │
+ * │  • Protocols: MCP enables AI agents to interact with any system            │
+ * │  • Routing: Determine where each tool executes based on availability        │
+ * │                                                                             │
+ * │  Real-world: Connect to browser automation, APIs, databases, file          │
+ * │  systems—all via MCP servers. The model plans what to call, you            │
+ * │  orchestrate the actual execution.                                         │
+ * └─────────────────────────────────────────────────────────────────────────────┘
+ *
+ * TEST: Say "Tell me the computer owner's name" — model calls get_real_name via MCP.
+ */
+
 import { useState, useEffect } from 'react';
 import Anthropic from '@anthropic-ai/sdk';
 import type { MessageParam, ToolResultBlockParam } from '@anthropic-ai/sdk/resources/messages';
@@ -46,14 +126,20 @@ async function mcpCall(method: string, params?: Record<string, unknown>) {
 }
 
 async function discoverMcpTools(): Promise<Anthropic.Tool[]> {
-  await mcpCall('initialize', { protocolVersion: '2025-03-26', capabilities: {}, clientInfo: { name: 'browser-agent', version: '1.0.0' } });
+  await mcpCall('initialize', {
+    protocolVersion: '2025-03-26',
+    capabilities: {},
+    clientInfo: { name: 'browser-agent', version: '1.0.0' },
+  });
   await mcpCall('notifications/initialized');
   const result = await mcpCall('tools/list');
-  return (result?.result?.tools ?? []).map((t: { name: string; description: string; inputSchema: object }) => ({
-    name: t.name,
-    description: t.description,
-    input_schema: t.inputSchema,
-  }));
+  return (result?.result?.tools ?? []).map(
+    (t: { name: string; description: string; inputSchema: object }) => ({
+      name: t.name,
+      description: t.description,
+      input_schema: t.inputSchema,
+    }),
+  );
 }
 
 async function callMcpTool(name: string, args: Record<string, unknown>): Promise<string> {

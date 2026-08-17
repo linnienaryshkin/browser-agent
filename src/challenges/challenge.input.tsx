@@ -89,17 +89,6 @@ const TOOLS: Anthropic.Tool[] = [
   },
 ];
 
-function executeTool(name: string, input: Record<string, unknown>): string {
-  switch (name) {
-    case 'get_theme':
-      return JSON.stringify({ theme: window.getTheme() });
-    case 'set_theme':
-      window.setTheme(input.theme as 'light' | 'dark');
-      return JSON.stringify({ theme: input.theme });
-    default:
-      return `Unknown tool: ${name}`;
-  }
-}
 
 export function Chat() {
   const [messages, setMessages] = useState<MessageParam[]>([]);
@@ -116,31 +105,47 @@ export function Chat() {
     setLoading(true);
 
     try {
-      let stopReason = '';
+      const response = await client.messages.create({
+        model: 'claude-haiku-4-5',
+        max_tokens: 1024,
+        tools: TOOLS,
+        messages: history,
+      });
 
-      while (stopReason !== 'end_turn') {
-        const response = await client.messages.create({
+      history.push({ role: 'assistant', content: response.content });
+      setMessages([...history]);
+
+      if (response.stop_reason === 'tool_use') {
+        const toolBlock = response.content.find((b) => b.type === 'tool_use')!;
+
+        let content: string;
+        if (toolBlock.name === 'get_theme') {
+          content = JSON.stringify({ theme: window.getTheme() });
+        } else if (toolBlock.name === 'set_theme') {
+          window.setTheme((toolBlock.input as Record<string, unknown>).theme as 'light' | 'dark');
+          content = JSON.stringify({ theme: (toolBlock.input as Record<string, unknown>).theme });
+        } else {
+          content = `Unknown tool: ${toolBlock.name}`;
+        }
+
+        const toolResult: ToolResultBlockParam = {
+          type: 'tool_result' as const,
+          tool_use_id: toolBlock.id,
+          content,
+        };
+
+        history.push({ role: 'user', content: [toolResult] });
+        setMessages([...history]);
+
+        const finalResponse = await client.messages.create({
           model: 'claude-haiku-4-5',
           max_tokens: 1024,
           tools: TOOLS,
           messages: history,
         });
 
-        history.push({ role: 'assistant', content: response.content });
+        history.push({ role: 'assistant', content: finalResponse.content });
         setMessages([...history]);
-        stopReason = response.stop_reason ?? 'end_turn';
-
-        if (stopReason === 'tool_use') {
-          const toolUseBlocks = response.content.filter((b) => b.type === 'tool_use');
-          const toolResults: ToolResultBlockParam[] = toolUseBlocks.map((block) => ({
-            type: 'tool_result' as const,
-            tool_use_id: block.id,
-            content: executeTool(block.name, block.input as Record<string, unknown>),
-          }));
-
-          history.push({ role: 'user', content: toolResults });
-          setMessages([...history]);
-        }
       }
     } finally {
       setLoading(false);

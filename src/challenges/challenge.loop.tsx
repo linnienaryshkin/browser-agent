@@ -1,3 +1,77 @@
+/**
+ * ╔══════════════════════════════════════════════════════════════════════════════╗
+ * ║  Challenge: LOOP                                                           ║
+ * ║  Multi-step tool reasoning: the model plans across multiple steps           ║
+ * ╚══════════════════════════════════════════════════════════════════════════════╝
+ *
+ * GOAL: Enable the model to call multiple tools in sequence without waiting
+ *       for user input. The agent loop continues until stop_reason is "end_turn".
+ *
+ * ┌─────────────────────────────────────────────────────────────────────────────┐
+ * │  Multi-Step Reasoning                                                       │
+ * │                                                                             │
+ * │  User: "Switch the theme to dark"                                           │
+ * │                                                                             │
+ * │  Loop Turn 1:                                                               │
+ * │  ┌────────────────────────────────────────────────────────────┐             │
+ * │  │ Model response: { type: "tool_use", name: "get_theme" }    │             │
+ * │  │ stop_reason: "tool_use"                                    │             │
+ * │  │                                                            │             │
+ * │  │ → Client executes get_theme, gets "light"                  │             │
+ * │  │ → Appends tool_result to history                           │             │
+ * │  └────────────────────────────────────────────────────────────┘             │
+ * │                                                                             │
+ * │  Loop Turn 2:                                                               │
+ * │  ┌────────────────────────────────────────────────────────────┐             │
+ * │  │ Model response: { type: "tool_use", name: "set_theme" }    │             │
+ * │  │ input: { theme: "dark" }                                   │             │
+ * │  │ stop_reason: "tool_use"                                    │             │
+ * │  │                                                            │             │
+ * │  │ → Client executes set_theme("dark")                        │             │
+ * │  │ → Appends tool_result to history                           │             │
+ * │  └────────────────────────────────────────────────────────────┘             │
+ * │                                                                             │
+ * │  Loop Turn 3:                                                               │
+ * │  ┌────────────────────────────────────────────────────────────┐             │
+ * │  │ Model response: { type: "text", text: "Done! Theme set..." }│             │
+ * │  │ stop_reason: "end_turn"  ◀── loop exits                    │             │
+ * │  └────────────────────────────────────────────────────────────┘             │
+ * └─────────────────────────────────────────────────────────────────────────────┘
+ *
+ * ┌─────────────────────────────────────────────────────────────────────────────┐
+ * │  Key Pattern                                                                │
+ * │                                                                             │
+ * │  while (stopReason !== 'end_turn') {                                        │
+ * │    response = await client.messages.create({ messages: history });         │
+ * │    history.push({ role: 'assistant', content: response.content });         │
+ * │                                                                             │
+ * │    if (response.stop_reason === 'tool_use') {                              │
+ * │      // Execute all tool calls from this turn                              │
+ * │      const toolResults = [...];                                            │
+ * │      // Add tool results as user turn                                       │
+ * │      history.push({ role: 'user', content: toolResults });                │
+ * │    }                                                                       │
+ * │    stopReason = response.stop_reason ?? 'end_turn';                        │
+ * │  }                                                                         │
+ * │                                                                             │
+ * │  The loop keeps going until the model says it's done.                       │
+ * └─────────────────────────────────────────────────────────────────────────────┘
+ *
+ * ┌─────────────────────────────────────────────────────────────────────────────┐
+ * │  Why This Matters                                                           │
+ * │                                                                             │
+ * │  • Agentic: The model drives the flow; you just execute and loop           │
+ * │  • Reasoning: Model can check state (get_theme) then make decisions        │
+ * │  • Planning: Complex tasks that need multiple steps work naturally         │
+ * │                                                                             │
+ * │  Example: "Make the background dark and tell me the new setting"           │
+ * │  Model reasons: First check current theme, then set it, then report.       │
+ * └─────────────────────────────────────────────────────────────────────────────┘
+ *
+ * TEST: Ask "Get the current theme and tell me what it is" — one loop.
+ *       Ask "If we're in light mode, switch to dark; otherwise stay put" — model reasons first.
+ */
+
 import { useState } from 'react';
 import Anthropic from '@anthropic-ai/sdk';
 import type { MessageParam, ToolResultBlockParam } from '@anthropic-ai/sdk/resources/messages';

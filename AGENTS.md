@@ -15,7 +15,7 @@ npm run format    # Prettier (formats src/)
 
 This is a React + TypeScript + Vite app called **BrowserAgent** — a hands-on learning curriculum for the Anthropic TypeScript SDK. It targets frontend engineers preparing for the Anthropic Architect Certification.
 
-**Challenge structure** — each challenge lives in `src/challenges/challenge.<name>.tsx` as a self-contained chat component with progressively more features. `Solution.tsx` is the complete reference. `Exercise.tsx` is the learner's blank canvas.
+**Challenge structure** — each challenge lives in `src/challenges/challenge.<name>.tsx` as a self-contained chat component with progressively more features. Each challenge is fully working and ready to run. `Exercise.tsx` is a blank template for learners who want to code from scratch.
 
 **App shell** (`src/App.tsx`) — renders challenges as tabs via React Router. Theme state (light/dark) lives in `main.tsx` and is persisted in the `?theme=` URL param. Exposed globals: `window.getTheme()`, `window.setTheme(mode)`, `window.toggleTheme()`.
 
@@ -28,14 +28,13 @@ This is a React + TypeScript + Vite app called **BrowserAgent** — a hands-on l
 ## Challenge Progression
 
 | Tab | File | Key concept |
-|-----|------|-------------|
+| ----- | ------ | ------------- |
 | Hello | `challenge.hello.tsx` | Create client, send message, display reply |
 | Memory | `challenge.memory.tsx` | Pass full history (stateless API) |
-| Tool | `challenge.tool.tsx` | `get_theme` tool, agent loop, `stop_reason` |
+| Tool | `challenge.tool.tsx` | `get_theme` tool, tool execution, `stop_reason` |
 | Input | `challenge.input.tsx` | `set_theme` with structured input schema |
-| Loop | `challenge.loop.tsx` | Multi-step tool reasoning (get → set) |
+| Loop | `challenge.loop.tsx` | Multi-step tool reasoning with while loop |
 | MCP | `challenge.mcp.tsx` | Discover + call remote MCP tools |
-| Solution | `Solution.tsx` | All features combined |
 
 ## Certification Domains Covered
 
