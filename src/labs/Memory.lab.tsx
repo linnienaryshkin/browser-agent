@@ -2,50 +2,74 @@
  * ╔══════════════════════════════════════════════════════════════════════════════╗
  * ║  Lab: MEMORY                                                               ║
  * ║  Make the chat remember previous messages                                  ║
- * ╚══════════════════════════════════════════════════════════════════════╝
+ * ╚══════════════════════════════════════════════════════════════════════════════╝
  *
  * GOAL: Pass the full conversation history on every API call so the model
  *       knows what was said before.
  *
  * ┌─────────────────────────────────────────────────────────────────────────────┐
- * │  The Anthropic API is STATELESS                                             │
+ * │  A stateless API                                                            │
  * │                                                                             │
- * │  The server holds NO memory between requests.                               │
- * │  You must send the FULL history every time.                                 │
+ * │  The server holds no session. Every request is processed in isolation and   │
+ * │  discarded the moment it completes. The client is the sole source of        │
+ * │  conversation state and must replay the full history on every call.         │
  * │                                                                             │
- * │  Turn 1:                                                                    │
- * │  ┌──────────────────────────────────────────┐                               │
- * │  │ messages: [                              │                               │
- * │  │   { role: "user", content: "Hi, I'm Al" }│                               │
- * │  │ ]                                        │                               │
- * │  └──────────────────────────────────────────┘                               │
+ * │   Turn 1   ──▶  [ user ]                                                   │
+ * │   Turn 2   ──▶  [ user · assistant · user ]                                │
+ * │   Turn 3   ──▶  [ user · assistant · user · assistant · user ]             │
+ * │                   ▲ grows by two messages each round trip                   │
  * │                                                                             │
- * │  Turn 2:                                                                    │
- * │  ┌──────────────────────────────────────────────────────────┐               │
- * │  │ messages: [                                              │               │
- * │  │   { role: "user",      content: "Hi, I'm Al" },         │               │
- * │  │   { role: "assistant", content: "Hello Al!" },           │               │
- * │  │   { role: "user",      content: "What's my name?" },    │               │
- * │  │ ]                                                        │               │
- * │  └──────────────────────────────────────────────────────────┘               │
- * │                                                                             │
- * │  Turn 3: (history keeps growing)                                            │
- * │  ┌────────────────────────────────────────────────────────────────────┐     │
- * │  │ messages: [ ...all previous turns..., new user message ]           │     │
- * │  └────────────────────────────────────────────────────────────────────┘     │
+ * │  Lose the array and you lose the conversation.                              │
  * └─────────────────────────────────────────────────────────────────────────────┘
  *
  * ┌─────────────────────────────────────────────────────────────────────────────┐
- * │  Pattern                                                                    │
+ * │  Tokenization — how text enters the model                                   │
  * │                                                                             │
- * │  1. Append user message to local history array                              │
- * │  2. Send entire history to the API                                          │
- * │  3. Append assistant response to local history                              │
- * │  4. Repeat                                                                  │
+ * │  Before any processing, the entire message history is converted to tokens   │
+ * │  — sub-word units drawn from the model's fixed vocabulary. Common words     │
+ * │  map to a single token; rare or long words split into several. The model    │
+ * │  never sees characters or words — only token IDs.                           │
  * │                                                                             │
- * │  const history = [...messages, newUserMessage];                              │
- * │  const response = await client.messages.create({ messages: history });      │
- * │  history.push({ role: "assistant", content: response.content });            │
+ * │  "What is quantum computing?"                                               │
+ * │       │                                                                     │
+ * │       ▼                                                                     │
+ * │   [ What ][ is ][ quantum ][ computing ][ ? ]                               │
+ * │                      │                                                      │
+ * │               multiple meanings:                                            │
+ * │               physics unit / quantum mechanics / quantum computing          │
+ * │               — resolved in the next step (embedding + attention)           │
+ * │                                                                             │
+ * │  Explore tokenization interactively: https://platform.openai.com/tokenizer  │
+ * └─────────────────────────────────────────────────────────────────────────────┘
+ *
+ * ┌─────────────────────────────────────────────────────────────────────────────┐
+ * │  Next-token prediction — why the whole context must be present              │
+ * │                                                                             │
+ * │  An LLM is a next-token predictor. At each step it receives every token     │
+ * │  produced so far — input and output alike — and estimates a probability     │
+ * │  distribution over the entire vocabulary for what comes next, then samples  │
+ * │  one token from that distribution. This repeats until a stop condition is   │
+ * │  met (end-of-sequence token, max_tokens, or a stop sequence).               │
+ * │                                                                             │
+ * │  Without prior turns the model has no context, so sending only the latest  │
+ * │  user message is indistinguishable from starting a brand-new conversation.  │
+ * │                                                                             │
+ * │  Cost implication: each turn re-sends the entire history, so token usage   │
+ * │  (and cost) grows roughly linearly with conversation length.                │
+ * └─────────────────────────────────────────────────────────────────────────────┘
+ *
+ * ┌─────────────────────────────────────────────────────────────────────────────┐
+ * │  Embeddings — semantic vectors                                              │
+ * │                                                                             │
+ * │  Before attention can resolve meaning, each token is projected into a       │
+ * │  high-dimensional numeric vector (an embedding). The vector encodes what    │
+ * │  the token typically means across training data. Tokens with similar        │
+ * │  meanings cluster together in that space.                                   │
+ * │                                                                             │
+ * │  This same idea powers RAG (Retrieval-Augmented Generation): documents are  │
+ * │  stored as embedding vectors, the user query is embedded at query time,     │
+ * │  and the nearest chunks are injected into the prompt. The model reads them  │
+ * │  as ordinary context — it never "memorised" the documents.                  │
  * └─────────────────────────────────────────────────────────────────────────────┘
  *
  * KEY INSIGHT: The client is the source of truth for conversation state.

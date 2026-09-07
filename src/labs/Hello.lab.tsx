@@ -7,48 +7,67 @@
  * GOAL: Create an Anthropic client, send a single user message, display the reply.
  *
  * ┌─────────────────────────────────────────────────────────────────────────────┐
- * │  Request / Response Flow                                                    │
+ * │  How a request reaches Anthropic from the browser                           │
  * │                                                                             │
- * │  ┌────────┐         ┌──────────────┐         ┌───────────┐                 │
- * │  │ Browser │───────▶│ Vite Proxy   │───────▶│ Anthropic │                 │
- * │  │  (SDK)  │◀───────│ /api/anthropic│◀───────│    API    │                 │
- * │  └────────┘         └──────────────┘         └───────────┘                 │
+ * │   Browser          Vite dev server        Anthropic API                    │
+ * │     │                    │                      │                           │
+ * │     │── SDK call ───────▶│                      │                           │
+ * │     │                    │── proxied request ──▶│                           │
+ * │     │                    │◀─ response ──────────│                           │
+ * │     │◀─ response ────────│                      │                           │
  * │                                                                             │
- * │  Why the proxy? Browser CORS blocks direct API calls.                       │
- * │  The Vite dev server forwards /api/anthropic/* to api.anthropic.com.        │
+ * │  Browsers cannot call api.anthropic.com directly because of CORS.           │
+ * │  The Vite dev server acts as a transparent proxy, forwarding every          │
+ * │  request under /api/anthropic to the real endpoint.                         │
  * └─────────────────────────────────────────────────────────────────────────────┘
  *
  * ┌─────────────────────────────────────────────────────────────────────────────┐
- * │  Anthropic SDK Setup                                                        │
+ * │  What a request carries                                                     │
  * │                                                                             │
- * │  const client = new Anthropic({                                             │
- * │    apiKey: import.meta.env.ANTHROPIC_API_KEY,                               │
- * │    baseURL: `${window.location.origin}/api/anthropic`,                      │
- * │    dangerouslyAllowBrowser: true,                                           │
- * │  });                                                                        │
+ * │  Every call to messages.create must include at minimum:                     │
  * │                                                                             │
- * │  • apiKey ─── from .env file (exposed via Vite envPrefix)                   │
- * │  • baseURL ── points to local proxy, NOT api.anthropic.com                  │
- * │  • dangerouslyAllowBrowser ── required for browser usage                    │
+ * │  model      — which model to run; controls capability, speed, and cost      │
+ * │  max_tokens — hard ceiling on how many tokens the model may generate        │
+ * │  messages   — the full conversation so far as an ordered list of turns      │
+ * │                                                                             │
+ * │  A "turn" is a single message with a role (user or assistant) and content.  │
+ * │  In this lab you send exactly one user turn and read one assistant turn     │
+ * │  back. No history is kept between sends — that comes in the next lab.       │
  * └─────────────────────────────────────────────────────────────────────────────┘
  *
  * ┌─────────────────────────────────────────────────────────────────────────────┐
- * │  API Call                                                                   │
+ * │  What a response carries — the Message object                               │
  * │                                                                             │
- * │  const response = await client.messages.create({                            │
- * │    model: "claude-haiku-4-5",                                               │
- * │    max_tokens: 1024,                                                        │
- * │    messages: [{ role: "user", content: "Hello!" }],                         │
- * │  });                                                                        │
+ * │  id            — unique identifier for this message                         │
+ * │  type          — always "message"                                           │
+ * │  role          — always "assistant"                                         │
+ * │  model         — the model that generated the response                      │
+ * │  content       — array of typed blocks; never a plain string                │
+ * │  stop_reason   — why generation ended:                                      │
+ * │                    end_turn       natural stopping point                    │
+ * │                    tool_use       model invoked one or more tools           │
+ * │                    max_tokens     token budget exhausted                    │
+ * │                    stop_sequence  a custom stop sequence was matched        │
+ * │  stop_sequence — the matched stop sequence string, if any                  │
+ * │  usage         — input / output token counts; drives billing and rate limits│
  * │                                                                             │
- * │  response.content = [{ type: "text", text: "Hi there!" }]                   │
- * │                       ▲                                                     │
- * │                       └── content is always an ARRAY of blocks              │
+ * │  content is always an array even when there is only one block. This         │
+ * │  design supports mixed responses: text alongside tool calls in one turn.    │
  * └─────────────────────────────────────────────────────────────────────────────┘
  *
- * KEY INSIGHT: This chat has NO memory. Each message is independent.
- *             Try asking "what did I just say?" — it won't know.
- *             That's fixed in the next lab (Memory).
+ * ┌─────────────────────────────────────────────────────────────────────────────┐
+ * │  Content block types                                                        │
+ * │                                                                             │
+ * │   text        — plain text the model wrote; the common case                 │
+ * │   tool_use    — model's request to call a function (Tool lab)               │
+ * │   tool_result — your answer to a tool_use request (Tool lab)                │
+ * │                                                                             │
+ * │  A single assistant message can mix all three. Always iterate the array;   │
+ * │  never assume only one block exists.                                        │
+ * └─────────────────────────────────────────────────────────────────────────────┘
+ *
+ * KEY INSIGHT: This chat has NO memory. Each send is a fresh, independent call.
+ *             Ask "what did I just say?" — it won't know. Fixed in Memory lab.
  */
 
 import { useState } from 'react';

@@ -5,51 +5,61 @@
  * ╚══════════════════════════════════════════════════════════════════════════════╝
  *
  * GOAL: Add `set_theme` — a tool that accepts structured input.
- *       The model must pass { theme: "light" | "dark" } to call it.
+ *       The model must pass a validated argument to call it.
  *
  * ┌─────────────────────────────────────────────────────────────────────────────┐
- * │  input_schema (JSON Schema)                                                 │
+ * │  JSON Schema — the contract between you and the model                       │
  * │                                                                             │
- * │  {                                                                          │
- * │    type: "object",                                                          │
- * │    properties: {                                                            │
- * │      theme: {                                                               │
- * │        type: "string",                                                      │
- * │        enum: ["light", "dark"],     ◀── constrains valid values             │
- * │        description: "The theme"                                             │
- * │      }                                                                      │
- * │    },                                                                       │
- * │    required: ["theme"]              ◀── model MUST provide this             │
- * │  }                                                                          │
+ * │  Every tool's input_schema is a JSON Schema object that tells the model     │
+ * │  exactly what arguments it may pass. The API uses the schema to guide       │
+ * │  generation so the model's output is structurally valid before it reaches   │
+ * │  your client. You define:                                                   │
+ * │                                                                             │
+ * │   properties — each argument: its type, allowed values, and a description   │
+ * │   required   — which arguments the model must always provide                │
+ * │                                                                             │
+ * │  The description on each property is read by the model and shapes how it    │
+ * │  chooses values. Write it for the model, not for humans.                    │
  * └─────────────────────────────────────────────────────────────────────────────┘
  *
  * ┌─────────────────────────────────────────────────────────────────────────────┐
- * │  What the model sends back when it calls set_theme:                         │
+ * │  What JSON Schema cannot express                                            │
  * │                                                                             │
- * │  {                                                                          │
- * │    type: "tool_use",                                                        │
- * │    id: "toolu_01abc...",                                                    │
- * │    name: "set_theme",                                                       │
- * │    input: { theme: "dark" }         ◀── structured, typed input             │
- * │  }                                                                          │
+ * │  The schema enforces structure and types, not business logic. It cannot     │
+ * │  express constraints like:                                                  │
  * │                                                                             │
- * │  You read block.input.theme to know what the model chose.                   │
+ * │   • "start date must be before end date"                                    │
+ * │   • "if mode is range, both min and max are required"                       │
+ * │   • "quantity must be a positive multiple of 10"                            │
+ * │                                                                             │
+ * │  You must enforce these yourself when the tool_use block arrives. If the    │
+ * │  input is invalid, return a descriptive error as the tool_result and the    │
+ * │  model will correct itself on the next turn.                                │
  * └─────────────────────────────────────────────────────────────────────────────┘
  *
  * ┌─────────────────────────────────────────────────────────────────────────────┐
- * │  Two tools now:                                                             │
+ * │  Sequence — tool call with structured input                                 │
  * │                                                                             │
- * │  ┌────────────┐     ┌────────────┐                                         │
- * │  │ get_theme  │     │ set_theme  │                                         │
- * │  │ (no input) │     │ { theme }  │                                         │
- * │  │ returns    │     │ applies    │                                         │
- * │  │ current    │     │ the change │                                         │
- * │  └────────────┘     └────────────┘                                         │
- * │                                                                             │
- * │  The model can now READ and WRITE the theme.                                │
+ * │   Client            API                 Tool                               │
+ * │     │                 │                   │                                 │
+ * │     │── user msg ────▶│                   │                                 │
+ * │     │   + tool defs   │                   │                                 │
+ * │     │                 │                   │                                 │
+ * │     │◀── tool_use ────│  stop_reason:     │                                 │
+ * │     │    set_theme    │  "tool_use"        │                                 │
+ * │     │    input: dark  │                   │                                 │
+ * │     │                 │                   │                                 │
+ * │     │─────────────────┼── setTheme(dark) ▶│                                 │
+ * │     │◀────────────────┼── ok ─────────────│                                 │
+ * │     │                 │                   │                                 │
+ * │     │── tool_result ─▶│                   │                                 │
+ * │     │   (+ history)   │                   │                                 │
+ * │     │                 │                   │                                 │
+ * │     │◀── text ────────│  stop_reason:     │                                 │
+ * │                        │  "end_turn"       │                                 │
  * └─────────────────────────────────────────────────────────────────────────────┘
  *
- * TEST: Ask "Switch to dark mode" — model should call set_theme({ theme: "dark" }).
+ * TEST: Ask "Switch to dark mode" — model should call set_theme with theme: dark.
  */
 
 import { useState } from 'react';

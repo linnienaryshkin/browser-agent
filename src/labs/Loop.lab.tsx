@@ -8,64 +8,69 @@
  *       for user input. The agent loop continues until stop_reason is "end_turn".
  *
  * ┌─────────────────────────────────────────────────────────────────────────────┐
- * │  Multi-Step Reasoning                                                       │
+ * │  Content blocks — mixed messages                                            │
  * │                                                                             │
- * │  User: "Switch the theme to dark"                                           │
+ * │  A single assistant message can contain multiple blocks of different types  │
+ * │  at once. The model may narrate its reasoning in a text block and request   │
+ * │  a tool call in the same response. Both arrive together in content[].       │
  * │                                                                             │
- * │  Loop Turn 1:                                                               │
- * │  ┌────────────────────────────────────────────────────────────┐             │
- * │  │ Model response: { type: "tool_use", name: "get_theme" }    │             │
- * │  │ stop_reason: "tool_use"                                    │             │
- * │  │                                                            │             │
- * │  │ → Client executes get_theme, gets "light"                  │             │
- * │  │ → Appends tool_result to history                           │             │
- * │  └────────────────────────────────────────────────────────────┘             │
+ * │   content[0]  type: text      "Let me check the current theme."            │
+ * │   content[1]  type: tool_use  get_theme  id: tu_01                         │
  * │                                                                             │
- * │  Loop Turn 2:                                                               │
- * │  ┌────────────────────────────────────────────────────────────┐             │
- * │  │ Model response: { type: "tool_use", name: "set_theme" }    │             │
- * │  │ input: { theme: "dark" }                                   │             │
- * │  │ stop_reason: "tool_use"                                    │             │
- * │  │                                                            │             │
- * │  │ → Client executes set_theme("dark")                        │             │
- * │  │ → Appends tool_result to history                           │             │
- * │  └────────────────────────────────────────────────────────────┘             │
- * │                                                                             │
- * │  Loop Turn 3:                                                               │
- * │  ┌────────────────────────────────────────────────────────────┐             │
- * │  │ Model response: { type: "text", text: "Done! Theme set..." }│             │
- * │  │ stop_reason: "end_turn"  ◀── loop exits                    │             │
- * │  └────────────────────────────────────────────────────────────┘             │
+ * │  Your renderer must handle every block type. Anything unexpected is safe   │
+ * │  to display as raw data — future block types are additive.                 │
  * └─────────────────────────────────────────────────────────────────────────────┘
  *
  * ┌─────────────────────────────────────────────────────────────────────────────┐
- * │  Key Pattern                                                                │
+ * │  Multi-turn — one user intent, many API calls                               │
  * │                                                                             │
- * │  while (stopReason !== 'end_turn') {                                        │
- * │    response = await client.messages.create({ messages: history });         │
- * │    history.push({ role: 'assistant', content: response.content });         │
+ * │  A "turn" is one API call. A single user message can trigger several turns  │
+ * │  before the model finishes. Each turn appends to the shared history:        │
  * │                                                                             │
- * │    if (response.stop_reason === 'tool_use') {                              │
- * │      // Execute all tool calls from this turn                              │
- * │      const toolResults = [...];                                            │
- * │      // Add tool results as user turn                                       │
- * │      history.push({ role: 'user', content: toolResults });                │
- * │    }                                                                       │
- * │    stopReason = response.stop_reason ?? 'end_turn';                        │
- * │  }                                                                         │
+ * │   Turn 1  user asks ──────────────▶ model: tool_use (get_theme)            │
+ * │   Turn 2  tool_result appended ───▶ model: tool_use (set_theme)            │
+ * │   Turn 3  tool_result appended ───▶ model: text, end_turn                  │
  * │                                                                             │
- * │  The loop keeps going until the model says it's done.                       │
+ * │  The user types once. The loop runs autonomously until end_turn.           │
  * └─────────────────────────────────────────────────────────────────────────────┘
  *
  * ┌─────────────────────────────────────────────────────────────────────────────┐
- * │  Why This Matters                                                           │
+ * │  The agent loop — structure                                                 │
  * │                                                                             │
- * │  • Agentic: The model drives the flow; you just execute and loop           │
- * │  • Reasoning: Model can check state (get_theme) then make decisions        │
- * │  • Planning: Complex tasks that need multiple steps work naturally         │
+ * │  Call the API → push assistant response to history                          │
+ * │  If stop_reason is tool_use:                                                │
+ * │    collect every tool_use block from the response                           │
+ * │    execute all of them                                                      │
+ * │    push ALL results as a single user message → loop                         │
+ * │  If stop_reason is end_turn: done                                           │
  * │                                                                             │
- * │  Example: "Make the background dark and tell me the new setting"           │
- * │  Model reasons: First check current theme, then set it, then report.       │
+ * │  Returning all results in one user message is required — the API treats     │
+ * │  a tool_use block without a matching tool_result as an error.               │
+ * │                                                                             │
+ * │  Guard against infinite loops. A misbehaving model or a tool that always   │
+ * │  returns an error can cause the loop to spin indefinitely, burning tokens.  │
+ * │  Always cap the number of iterations and break with an error if exceeded.  │
+ * └─────────────────────────────────────────────────────────────────────────────┘
+ *
+ * ┌─────────────────────────────────────────────────────────────────────────────┐
+ * │  Parallel tool use — the model can request multiple tools in one turn       │
+ * │                                                                             │
+ * │   Client                API                                                 │
+ * │     │                    │                                                  │
+ * │     │── user msg ───────▶│                                                  │
+ * │     │                    │                                                  │
+ * │     │◀── tool_use A ─────│  both in one                                     │
+ * │     │◀── tool_use B ─────│  assistant message                               │
+ * │     │                    │                                                  │
+ * │     │  execute A and B concurrently                                         │
+ * │     │                    │                                                  │
+ * │     │── result A ───────▶│  both in one                                     │
+ * │     │── result B ───────▶│  user message                                    │
+ * │     │                    │                                                  │
+ * │     │◀── text ───────────│  end_turn                                        │
+ * │                                                                             │
+ * │  You may execute the tools concurrently on your side — the API only cares  │
+ * │  that all results arrive together before the next generation step.          │
  * └─────────────────────────────────────────────────────────────────────────────┘
  *
  * TEST: Ask "Get the current theme and tell me what it is" — one loop.

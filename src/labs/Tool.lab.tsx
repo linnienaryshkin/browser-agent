@@ -8,46 +8,54 @@
  *       execute it and return the result. This is the "agent loop."
  *
  * ┌─────────────────────────────────────────────────────────────────────────────┐
- * │  Agent Loop                                                                 │
+ * │  stop_reason — how the model signals what happens next                      │
  * │                                                                             │
- * │  ┌────────┐       ┌───────────┐       ┌──────┐                             │
- * │  │ Client │──────▶│ Anthropic │       │ Tool │                             │
- * │  │        │◀──────│    API    │       │      │                             │
- * │  │        │       └───────────┘       │      │                             │
- * │  │        │───────────────────────────▶│      │                             │
- * │  │        │◀───────────────────────────│      │                             │
- * │  │        │──────▶┌───────────┐       └──────┘                             │
- * │  │        │◀──────│ Anthropic │                                             │
- * │  └────────┘       │    API    │                                             │
- * │                    └───────────┘                                             │
+ * │  Every response carries a stop_reason that tells you what to do.           │
+ * │  See the Hello lab for the full field reference; the values relevant here: │
  * │                                                                             │
- * │  1. Send message + tool definitions                                         │
- * │  2. API returns stop_reason: "tool_use"                                     │
- * │  3. Client executes the tool locally                                        │
- * │  4. Client sends tool_result back to API                                    │
- * │  5. API returns stop_reason: "end_turn" with final text                     │
+ * │   end_turn       — model finished naturally; render the text and wait       │
+ * │   tool_use       — model wants a function called; execute it and loop back  │
+ * │   max_tokens     — budget exhausted before the model could finish           │
+ * │   stop_sequence  — a custom stop sequence you defined was matched           │
+ * │                                                                             │
+ * │  Without tools, every response is end_turn. With tools, end_turn arrives   │
+ * │  only after every tool_use round trip has been completed.                  │
  * └─────────────────────────────────────────────────────────────────────────────┘
  *
  * ┌─────────────────────────────────────────────────────────────────────────────┐
- * │  Tool Definition                                                            │
+ * │  How the model calls external functions                                     │
  * │                                                                             │
- * │  {                                                                          │
- * │    name: "get_theme",                                                       │
- * │    description: "Get the current app color theme",                          │
- * │    input_schema: { type: "object", properties: {}, required: [] }           │
- * │  }                                                                          │
+ * │  The model never executes code. When it needs external data it emits a      │
+ * │  tool_use block — a structured call request — and stops. The client reads  │
+ * │  that block, runs the real function locally, wraps the result in a          │
+ * │  tool_result block, appends it to the history, and calls the API again.    │
+ * │  The model reads the result and continues reasoning from there.             │
  * │                                                                             │
- * │  • No input parameters — simplest possible tool                             │
- * │  • Description tells the model WHEN to use it                               │
- * │  • input_schema defines WHAT arguments it accepts (none here)               │
+ * │  A tool definition has three parts:                                         │
+ * │   name        — identifier the model uses in the tool_use block             │
+ * │   description — the only signal the model has for deciding when to call it  │
+ * │   input_schema — JSON Schema describing accepted arguments (none here)      │
  * └─────────────────────────────────────────────────────────────────────────────┘
  *
  * ┌─────────────────────────────────────────────────────────────────────────────┐
- * │  stop_reason values                                                         │
+ * │  Agent loop — one tool call                                                 │
  * │                                                                             │
- * │  "end_turn"  ─── model is done, display the text                            │
- * │  "tool_use"  ─── model wants to call a tool, keep looping                   │
- * │  "max_tokens" ── ran out of space (increase max_tokens)                     │
+ * │   Client            API                 Tool                               │
+ * │     │                 │                   │                                 │
+ * │     │── user msg ────▶│                   │                                 │
+ * │     │   + tool defs   │                   │                                 │
+ * │     │                 │                   │                                 │
+ * │     │◀── tool_use ────│  stop_reason:     │                                 │
+ * │     │    get_theme    │  "tool_use"        │                                 │
+ * │     │                 │                   │                                 │
+ * │     │─────────────────┼── execute ───────▶│                                 │
+ * │     │◀────────────────┼── result ─────────│                                 │
+ * │     │                 │                   │                                 │
+ * │     │── tool_result ─▶│                   │                                 │
+ * │     │   (+ history)   │                   │                                 │
+ * │     │                 │                   │                                 │
+ * │     │◀── text ────────│  stop_reason:     │                                 │
+ * │                        │  "end_turn"       │                                 │
  * └─────────────────────────────────────────────────────────────────────────────┘
  *
  * TEST: Ask "What theme is the app using?" — model should call get_theme.
