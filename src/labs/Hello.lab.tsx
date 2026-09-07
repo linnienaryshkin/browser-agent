@@ -1,61 +1,59 @@
 /**
  * ╔══════════════════════════════════════════════════════════════════════════════╗
- * ║  Challenge: TOOL                                                           ║
- * ║  Give the model a tool it can call                                         ║
+ * ║  Lab: HELLO                                                                ║
+ * ║  Send your first message to the Anthropic API                              ║
  * ╚══════════════════════════════════════════════════════════════════════════════╝
  *
- * GOAL: Define a `get_theme` tool. When the model decides to use it,
- *       execute it and return the result. This is the "agent loop."
+ * GOAL: Create an Anthropic client, send a single user message, display the reply.
  *
  * ┌─────────────────────────────────────────────────────────────────────────────┐
- * │  Agent Loop                                                                 │
+ * │  Request / Response Flow                                                    │
  * │                                                                             │
- * │  ┌────────┐       ┌───────────┐       ┌──────┐                             │
- * │  │ Client │──────▶│ Anthropic │       │ Tool │                             │
- * │  │        │◀──────│    API    │       │      │                             │
- * │  │        │       └───────────┘       │      │                             │
- * │  │        │───────────────────────────▶│      │                             │
- * │  │        │◀───────────────────────────│      │                             │
- * │  │        │──────▶┌───────────┐       └──────┘                             │
- * │  │        │◀──────│ Anthropic │                                             │
- * │  └────────┘       │    API    │                                             │
- * │                    └───────────┘                                             │
+ * │  ┌────────┐         ┌──────────────┐         ┌───────────┐                 │
+ * │  │ Browser │───────▶│ Vite Proxy   │───────▶│ Anthropic │                 │
+ * │  │  (SDK)  │◀───────│ /api/anthropic│◀───────│    API    │                 │
+ * │  └────────┘         └──────────────┘         └───────────┘                 │
  * │                                                                             │
- * │  1. Send message + tool definitions                                         │
- * │  2. API returns stop_reason: "tool_use"                                     │
- * │  3. Client executes the tool locally                                        │
- * │  4. Client sends tool_result back to API                                    │
- * │  5. API returns stop_reason: "end_turn" with final text                     │
+ * │  Why the proxy? Browser CORS blocks direct API calls.                       │
+ * │  The Vite dev server forwards /api/anthropic/* to api.anthropic.com.        │
  * └─────────────────────────────────────────────────────────────────────────────┘
  *
  * ┌─────────────────────────────────────────────────────────────────────────────┐
- * │  Tool Definition                                                            │
+ * │  Anthropic SDK Setup                                                        │
  * │                                                                             │
- * │  {                                                                          │
- * │    name: "get_theme",                                                       │
- * │    description: "Get the current app color theme",                          │
- * │    input_schema: { type: "object", properties: {}, required: [] }           │
- * │  }                                                                          │
+ * │  const client = new Anthropic({                                             │
+ * │    apiKey: import.meta.env.ANTHROPIC_API_KEY,                               │
+ * │    baseURL: `${window.location.origin}/api/anthropic`,                      │
+ * │    dangerouslyAllowBrowser: true,                                           │
+ * │  });                                                                        │
  * │                                                                             │
- * │  • No input parameters — simplest possible tool                             │
- * │  • Description tells the model WHEN to use it                               │
- * │  • input_schema defines WHAT arguments it accepts (none here)               │
+ * │  • apiKey ─── from .env file (exposed via Vite envPrefix)                   │
+ * │  • baseURL ── points to local proxy, NOT api.anthropic.com                  │
+ * │  • dangerouslyAllowBrowser ── required for browser usage                    │
  * └─────────────────────────────────────────────────────────────────────────────┘
  *
  * ┌─────────────────────────────────────────────────────────────────────────────┐
- * │  stop_reason values                                                         │
+ * │  API Call                                                                   │
  * │                                                                             │
- * │  "end_turn"  ─── model is done, display the text                            │
- * │  "tool_use"  ─── model wants to call a tool, keep looping                   │
- * │  "max_tokens" ── ran out of space (increase max_tokens)                     │
+ * │  const response = await client.messages.create({                            │
+ * │    model: "claude-haiku-4-5",                                               │
+ * │    max_tokens: 1024,                                                        │
+ * │    messages: [{ role: "user", content: "Hello!" }],                         │
+ * │  });                                                                        │
+ * │                                                                             │
+ * │  response.content = [{ type: "text", text: "Hi there!" }]                   │
+ * │                       ▲                                                     │
+ * │                       └── content is always an ARRAY of blocks              │
  * └─────────────────────────────────────────────────────────────────────────────┘
  *
- * TEST: Ask "What theme is the app using?" — model should call get_theme.
+ * KEY INSIGHT: This chat has NO memory. Each message is independent.
+ *             Try asking "what did I just say?" — it won't know.
+ *             That's fixed in the next lab (Memory).
  */
 
 import { useState } from 'react';
 import Anthropic from '@anthropic-ai/sdk';
-import type { MessageParam, ToolResultBlockParam } from '@anthropic-ai/sdk/resources/messages';
+import type { MessageParam } from '@anthropic-ai/sdk/resources/messages';
 import Box from '@mui/material/Box';
 import TextField from '@mui/material/TextField';
 import IconButton from '@mui/material/IconButton';
@@ -69,15 +67,6 @@ const client = new Anthropic({
   dangerouslyAllowBrowser: true,
 });
 
-const TOOLS: Anthropic.Tool[] = [
-  {
-    name: 'get_theme',
-    description: 'Get the current app color theme. Returns "light" or "dark".',
-    input_schema: { type: 'object' as const, properties: {}, required: [] },
-  },
-];
-
-
 export function Chat() {
   const [messages, setMessages] = useState<MessageParam[]>([]);
   const [input, setInput] = useState('');
@@ -87,8 +76,8 @@ export function Chat() {
     const text = input.trim();
     if (!text || loading) return;
 
-    const history: MessageParam[] = [...messages, { role: 'user', content: text }];
-    setMessages(history);
+    const userMessage: MessageParam = { role: 'user', content: text };
+    setMessages((prev) => [...prev, userMessage]);
     setInput('');
     setLoading(true);
 
@@ -96,36 +85,11 @@ export function Chat() {
       const response = await client.messages.create({
         model: 'claude-haiku-4-5',
         max_tokens: 1024,
-        tools: TOOLS,
-        messages: history,
+        messages: [userMessage],
       });
 
-      history.push({ role: 'assistant', content: response.content });
-      setMessages([...history]);
-
-      if (response.stop_reason === 'tool_use') {
-        const theme = window.getTheme();
-        const toolId = response.content.find((b) => b.type === 'tool_use')!.id
-
-        const toolResult: ToolResultBlockParam = {
-          type: 'tool_result' as const,
-          tool_use_id: toolId,
-          content: JSON.stringify({ theme }),
-        };
-
-        history.push({ role: 'user', content: [toolResult] });
-        setMessages([...history]);
-
-        const finalResponse = await client.messages.create({
-          model: 'claude-haiku-4-5',
-          max_tokens: 1024,
-          tools: TOOLS,
-          messages: history,
-        });
-
-        history.push({ role: 'assistant', content: finalResponse.content });
-        setMessages([...history]);
-      }
+      const assistantMessage: MessageParam = { role: 'assistant', content: response.content };
+      setMessages((prev) => [...prev, assistantMessage]);
     } finally {
       setLoading(false);
     }
@@ -145,15 +109,7 @@ export function Chat() {
           </Typography>
         );
       }
-      const { type, ...rest } = block as unknown as { type: string; [k: string]: unknown };
-      return (
-        <Box key={i} sx={{ fontFamily: 'monospace', fontSize: 12, opacity: 0.85 }}>
-          <Typography variant="caption" sx={{ fontWeight: 'bold' }}>
-            {type}
-          </Typography>
-          <pre style={{ margin: 0 }}>{JSON.stringify(rest, null, 2)}</pre>
-        </Box>
-      );
+      return null;
     });
   };
 

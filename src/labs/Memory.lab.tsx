@@ -1,54 +1,57 @@
 /**
  * ╔══════════════════════════════════════════════════════════════════════════════╗
- * ║  Challenge: HELLO                                                          ║
- * ║  Send your first message to the Anthropic API                              ║
- * ╚══════════════════════════════════════════════════════════════════════════════╝
+ * ║  Lab: MEMORY                                                               ║
+ * ║  Make the chat remember previous messages                                  ║
+ * ╚══════════════════════════════════════════════════════════════════════╝
  *
- * GOAL: Create an Anthropic client, send a single user message, display the reply.
+ * GOAL: Pass the full conversation history on every API call so the model
+ *       knows what was said before.
  *
  * ┌─────────────────────────────────────────────────────────────────────────────┐
- * │  Request / Response Flow                                                    │
+ * │  The Anthropic API is STATELESS                                             │
  * │                                                                             │
- * │  ┌────────┐         ┌──────────────┐         ┌───────────┐                 │
- * │  │ Browser │───────▶│ Vite Proxy   │───────▶│ Anthropic │                 │
- * │  │  (SDK)  │◀───────│ /api/anthropic│◀───────│    API    │                 │
- * │  └────────┘         └──────────────┘         └───────────┘                 │
+ * │  The server holds NO memory between requests.                               │
+ * │  You must send the FULL history every time.                                 │
  * │                                                                             │
- * │  Why the proxy? Browser CORS blocks direct API calls.                       │
- * │  The Vite dev server forwards /api/anthropic/* to api.anthropic.com.        │
+ * │  Turn 1:                                                                    │
+ * │  ┌──────────────────────────────────────────┐                               │
+ * │  │ messages: [                              │                               │
+ * │  │   { role: "user", content: "Hi, I'm Al" }│                               │
+ * │  │ ]                                        │                               │
+ * │  └──────────────────────────────────────────┘                               │
+ * │                                                                             │
+ * │  Turn 2:                                                                    │
+ * │  ┌──────────────────────────────────────────────────────────┐               │
+ * │  │ messages: [                                              │               │
+ * │  │   { role: "user",      content: "Hi, I'm Al" },         │               │
+ * │  │   { role: "assistant", content: "Hello Al!" },           │               │
+ * │  │   { role: "user",      content: "What's my name?" },    │               │
+ * │  │ ]                                                        │               │
+ * │  └──────────────────────────────────────────────────────────┘               │
+ * │                                                                             │
+ * │  Turn 3: (history keeps growing)                                            │
+ * │  ┌────────────────────────────────────────────────────────────────────┐     │
+ * │  │ messages: [ ...all previous turns..., new user message ]           │     │
+ * │  └────────────────────────────────────────────────────────────────────┘     │
  * └─────────────────────────────────────────────────────────────────────────────┘
  *
  * ┌─────────────────────────────────────────────────────────────────────────────┐
- * │  Anthropic SDK Setup                                                        │
+ * │  Pattern                                                                    │
  * │                                                                             │
- * │  const client = new Anthropic({                                             │
- * │    apiKey: import.meta.env.ANTHROPIC_API_KEY,                               │
- * │    baseURL: `${window.location.origin}/api/anthropic`,                      │
- * │    dangerouslyAllowBrowser: true,                                           │
- * │  });                                                                        │
+ * │  1. Append user message to local history array                              │
+ * │  2. Send entire history to the API                                          │
+ * │  3. Append assistant response to local history                              │
+ * │  4. Repeat                                                                  │
  * │                                                                             │
- * │  • apiKey ─── from .env file (exposed via Vite envPrefix)                   │
- * │  • baseURL ── points to local proxy, NOT api.anthropic.com                  │
- * │  • dangerouslyAllowBrowser ── required for browser usage                    │
+ * │  const history = [...messages, newUserMessage];                              │
+ * │  const response = await client.messages.create({ messages: history });      │
+ * │  history.push({ role: "assistant", content: response.content });            │
  * └─────────────────────────────────────────────────────────────────────────────┘
  *
- * ┌─────────────────────────────────────────────────────────────────────────────┐
- * │  API Call                                                                   │
- * │                                                                             │
- * │  const response = await client.messages.create({                            │
- * │    model: "claude-haiku-4-5",                                               │
- * │    max_tokens: 1024,                                                        │
- * │    messages: [{ role: "user", content: "Hello!" }],                         │
- * │  });                                                                        │
- * │                                                                             │
- * │  response.content = [{ type: "text", text: "Hi there!" }]                   │
- * │                       ▲                                                     │
- * │                       └── content is always an ARRAY of blocks              │
- * └─────────────────────────────────────────────────────────────────────────────┘
+ * KEY INSIGHT: The client is the source of truth for conversation state.
+ *             If you lose the array, you lose the memory.
  *
- * KEY INSIGHT: This chat has NO memory. Each message is independent.
- *             Try asking "what did I just say?" — it won't know.
- *             That's fixed in the next challenge (Memory).
+ * TEST: Say "My name is X", then ask "What's my name?" — it should know.
  */
 
 import { useState } from 'react';
@@ -76,8 +79,8 @@ export function Chat() {
     const text = input.trim();
     if (!text || loading) return;
 
-    const userMessage: MessageParam = { role: 'user', content: text };
-    setMessages((prev) => [...prev, userMessage]);
+    const memory: MessageParam[] = [...messages, { role: 'user', content: text }];
+    setMessages(memory);
     setInput('');
     setLoading(true);
 
@@ -85,11 +88,11 @@ export function Chat() {
       const response = await client.messages.create({
         model: 'claude-haiku-4-5',
         max_tokens: 1024,
-        messages: [userMessage],
+        messages: memory,
       });
 
-      const assistantMessage: MessageParam = { role: 'assistant', content: response.content };
-      setMessages((prev) => [...prev, assistantMessage]);
+      memory.push({ role: 'assistant', content: response.content });
+      setMessages([...memory]);
     } finally {
       setLoading(false);
     }

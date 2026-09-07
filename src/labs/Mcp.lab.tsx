@@ -1,8 +1,8 @@
 /**
  * ╔══════════════════════════════════════════════════════════════════════════════╗
- * ║  Challenge: MCP                                                            ║
+ * ║  Lab: MCP                                                                  ║
  * ║  Discover and integrate remote tools via Model Context Protocol (MCP)      ║
- * ╚══════════════════════════════════════════════════════════════════════════════╝
+ * ╚══════════════════════════════════════════════════════════════════════╝
  *
  * GOAL: Connect to a local MCP server to discover remote tools, add them to
  *       the agent's toolset, and call them alongside local tools.
@@ -187,8 +187,8 @@ export function Chat() {
     const text = input.trim();
     if (!text || loading) return;
 
-    const history: MessageParam[] = [...messages, { role: 'user', content: text }];
-    setMessages(history);
+    const memory: MessageParam[] = [...messages, { role: 'user', content: text }];
+    setMessages(memory);
     setInput('');
     setLoading(true);
 
@@ -200,11 +200,11 @@ export function Chat() {
           model: 'claude-haiku-4-5',
           max_tokens: 1024,
           tools: allTools,
-          messages: history,
+          messages: memory,
         });
 
-        history.push({ role: 'assistant', content: response.content });
-        setMessages([...history]);
+        memory.push({ role: 'assistant', content: response.content });
+        setMessages([...memory]);
         stopReason = response.stop_reason ?? 'end_turn';
 
         if (stopReason === 'tool_use') {
@@ -217,8 +217,8 @@ export function Chat() {
             })),
           );
 
-          history.push({ role: 'user', content: toolResults });
-          setMessages([...history]);
+          memory.push({ role: 'user', content: toolResults });
+          setMessages([...memory]);
         }
       }
     } finally {

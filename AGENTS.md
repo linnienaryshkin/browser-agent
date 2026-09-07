@@ -15,9 +15,9 @@ npm run format    # Prettier (formats src/)
 
 This is a React + TypeScript + Vite app called **BrowserAgent** — a hands-on learning curriculum for the Anthropic TypeScript SDK. It targets frontend engineers preparing for the Anthropic Architect Certification.
 
-**Challenge structure** — each challenge lives in `src/challenges/challenge.<name>.tsx` as a self-contained chat component with progressively more features. Each challenge is fully working and ready to run. `Exercise.tsx` is a blank template for learners who want to code from scratch.
+**Lab structure** — each lab lives in `src/labs/lab.<name>.tsx` or uses the `Hello.lab.tsx` naming pattern as a self-contained chat component with progressively more features. Each lab is fully working and ready to run. `Exercise.tsx` is a blank template for learners who want to code from scratch.
 
-**App shell** (`src/App.tsx`) — renders challenges as tabs via React Router. Theme state (light/dark) lives in `main.tsx` and is persisted in the `?theme=` URL param. Exposed globals: `window.getTheme()`, `window.setTheme(mode)`, `window.toggleTheme()`.
+**App shell** (`src/App.tsx`) — renders labs as tabs via React Router. Theme state (light/dark) lives in `main.tsx` and is persisted in the `?theme=` URL param. Exposed globals: `window.getTheme()`, `window.setTheme(mode)`, `window.toggleTheme()`.
 
 **API proxy** — the Vite dev server proxies `/api/anthropic` → `https://api.anthropic.com` to avoid CORS in the browser. Components must set `baseURL: \`${window.location.origin}/api/anthropic\`` and `dangerouslyAllowBrowser: true` when constructing the Anthropic client.
 
@@ -25,16 +25,16 @@ This is a React + TypeScript + Vite app called **BrowserAgent** — a hands-on l
 
 **Env vars** — `ANTHROPIC_API_KEY` is exposed to the browser via `import.meta.env.ANTHROPIC_API_KEY` (`envPrefix: ['ANTHROPIC_']` in `vite.config.ts`). Copy from `.env.example`.
 
-## Challenge Progression
+## Lab Progression
 
 | Tab | File | Key concept |
 | ----- | ------ | ------------- |
-| Hello | `challenge.hello.tsx` | Create client, send message, display reply |
-| Memory | `challenge.memory.tsx` | Pass full history (stateless API) |
-| Tool | `challenge.tool.tsx` | `get_theme` tool, tool execution, `stop_reason` |
-| Input | `challenge.input.tsx` | `set_theme` with structured input schema |
-| Loop | `challenge.loop.tsx` | Multi-step tool reasoning with while loop |
-| MCP | `challenge.mcp.tsx` | Discover + call remote MCP tools |
+| Hello | `Hello.lab.tsx` | Create client, send message, display reply |
+| Memory | `lab.memory.tsx` | Pass full history (stateless API) |
+| Tool | `lab.tool.tsx` | `get_theme` tool, tool execution, `stop_reason` |
+| Input | `lab.input.tsx` | `set_theme` with structured input schema |
+| Loop | `lab.loop.tsx` | Multi-step tool reasoning with while loop |
+| MCP | `lab.mcp.tsx` | Discover + call remote MCP tools |
 
 ## Certification Domains Covered
 

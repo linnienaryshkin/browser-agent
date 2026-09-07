@@ -2,12 +2,12 @@
 
 ## Naming
 
-Dropping "kata" everywhere. New unit name: **Challenge**.  
-Folder convention: `src/challenges/challenge-NN-<slug>/`
+Dropping "kata" everywhere. New unit name: **Lab**.  
+Folder convention: `src/labs/lab-NN-<slug>/`
 
 ---
 
-## Challenge 01 — Basic Chat (existing, to be revised)
+## Lab 01 — Basic Chat (existing, to be revised)
 
 ### Current state
 
@@ -33,7 +33,7 @@ This teaches **multi-step tool reasoning** and a proper **agent loop** (multiple
 
 ---
 
-## Challenge 02 — MCP Integration (Smart Lamp)
+## Lab 02 — MCP Integration (Smart Lamp)
 
 ### Concept
 
@@ -100,7 +100,7 @@ Deploy: `npx wrangler@latest deploy` → `your-app.workers.dev/mcp`
 
 ### Narrative arc
 
-| Challenge | Tools live... | Transport |
+| Lab | Tools live... | Transport |
 | ----------- | -------------- | ----------- |
 | 01 | Inline in the component | Direct function call |
 | 02 | On a remote server | MCP over Streamable HTTP |
@@ -113,7 +113,7 @@ An SVG lamp in the app reflects the remote state (on/off glow, brightness opacit
 
 ---
 
-## Challenge 03 — Evaluation & Reliability (open question)
+## Lab 03 — Evaluation & Reliability (open question)
 
 ### The gap
 
@@ -147,7 +147,7 @@ No mechanism to test whether the LLM behaves correctly. Students trust vibes, no
 ### Possible structure
 
 ```
-src/challenges/challenge-03-evals/
+src/labs/lab-03-evals/
 ├── README.md
 ├── Evals.tsx              # UI: run button, results table
 ├── Evals.solution.tsx
@@ -164,7 +164,7 @@ Domain 5: Context Management & Reliability. The exam expects candidates to under
 
 ---
 
-## Challenge 04 — Prompt Engineering & Structured Output (future)
+## Lab 04 — Prompt Engineering & Structured Output (future)
 
 Not designed yet. Target: Domain 4. Likely involves system prompts, JSON mode, and output parsing.
 
@@ -172,7 +172,7 @@ Not designed yet. Target: Domain 4. Likely involves system prompts, JSON mode, a
 
 ## Overall sequence
 
-| # | Challenge | Domains | Key lesson |
+| # | Lab | Domains | Key lesson |
 | --- | ----------- | --------- | ------------ |
 | 01 | Basic Chat | 1, 2, 5 | Local tools, agent loop, multi-step reasoning |
 | 02 | MCP Lamp | 2 | Remote tools via protocol, Streamable HTTP |
@@ -183,12 +183,12 @@ Not designed yet. Target: Domain 4. Likely involves system prompts, JSON mode, a
 
 ## Migration checklist
 
-- [ ] Rename `src/katas/` → `src/challenges/`
-- [ ] Rename `kata-01-basic-chat/` → `challenge-01-basic-chat/`
+- [ ] Rename `src/katas/` → `src/labs/`
+- [ ] Rename `kata-01-basic-chat/` → `lab-01-basic-chat/`
 - [ ] Update App.tsx imports and routing
 - [ ] Update CLAUDE.md references
 - [ ] Update all README files
-- [ ] Revise Challenge 01 tools (get_theme/set_theme)
+- [ ] Revise Lab 01 tools (get_theme/set_theme)
 - [ ] Create MCP server repo (or monorepo `packages/mcp-lamp-server/`)
 - [ ] Deploy to Cloudflare Workers
-- [ ] Build Challenge 02 scaffold + solution
+- [ ] Build Lab 02 scaffold + solution

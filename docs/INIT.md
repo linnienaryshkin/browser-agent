@@ -6,7 +6,7 @@ A hands-on learning curriculum for frontend engineers to build real proficiency 
 
 ## Target Audience
 
-Frontend engineers comfortable with TypeScript and React. The challenge for this audience is developing an intuition for how LLMs work *as orchestrated systems*, not just as chat APIs. The curriculum provides a common infrastructure so learners can call the Anthropic API directly from the browser — no backend required.
+Frontend engineers comfortable with TypeScript and React. The lab for this audience is developing an intuition for how LLMs work *as orchestrated systems*, not just as chat APIs. The curriculum provides a common infrastructure so learners can call the Anthropic API directly from the browser — no backend required.
 
 The learning path is centered on the [anthropic-sdk-typescript](https://github.com/anthropics/anthropic-sdk-typescript).
 

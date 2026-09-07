@@ -9,13 +9,13 @@ import Brightness4Icon from '@mui/icons-material/Brightness4';
 import Brightness7Icon from '@mui/icons-material/Brightness7';
 import GitHubIcon from '@mui/icons-material/GitHub';
 import { BrowserRouter, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
-import { Chat as ChatHello } from './challenges/challenge.hello';
-import { Chat as ChatMemory } from './challenges/challenge.memory';
-import { Chat as ChatTool } from './challenges/challenge.tool';
-import { Chat as ChatInput } from './challenges/challenge.input';
-import { Chat as ChatLoop } from './challenges/challenge.loop';
-import { Chat as ChatMcp } from './challenges/challenge.mcp';
-import { Chat as ChatExercise } from './challenges/Exercise';
+import { Chat as ChatHello } from './labs/Hello.lab';
+import { Chat as ChatMemory } from './labs/Memory.lab';
+import { Chat as ChatTool } from './labs/Tool.lab';
+import { Chat as ChatInput } from './labs/Input.lab';
+import { Chat as ChatLoop } from './labs/Loop.lab';
+import { Chat as ChatMcp } from './labs/Mcp.lab';
+import { Chat as ChatExercise } from './labs/Exercise';
 
 const TABS = [
   { label: 'Exercise', path: '/' },
@@ -24,7 +24,7 @@ const TABS = [
   { label: 'Tool', path: '/tool' },
   { label: 'Input', path: '/input' },
   { label: 'Loop', path: '/loop' },
-  { label: 'MCP', path: '/mcp-challenge' },
+  { label: 'MCP', path: '/mcp-lab' },
 ];
 
 interface LayoutProps {
@@ -86,7 +86,7 @@ function Layout({ mode, onToggleTheme }: LayoutProps) {
           <Route path="/tool" element={<ChatTool />} />
           <Route path="/input" element={<ChatInput />} />
           <Route path="/loop" element={<ChatLoop />} />
-          <Route path="/mcp-challenge" element={<ChatMcp />} />
+          <Route path="/mcp-lab" element={<ChatMcp />} />
         </Routes>
       </Box>
     </Box>

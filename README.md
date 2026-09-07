@@ -1,8 +1,8 @@
-# BrowserAgent
+# [BrowserAgent](https://github.com/linnienaryshkin/browser-agent)
 
-Hands-on coding challenges for learning the Anthropic API and building agentic systems — in a running React app, in your browser.
+Hands-on coding labs for learning the Anthropic API and building agentic systems — in a running React app, in your browser.
 
-Each challenge is a fully working chat with progressively more capabilities.
+Each lab is a fully working chat with progressively more capabilities.
 
 ## Who this is for
 
@@ -18,7 +18,7 @@ cp .env.example .env   # paste your Anthropic API key
 npm run dev            # http://localhost:5173
 ```
 
-## Challenges
+## Labs
 
 | Tab | Name | What you learn |
 | ----- | ------ | ---------------- |

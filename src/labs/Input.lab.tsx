@@ -1,6 +1,6 @@
 /**
  * ╔══════════════════════════════════════════════════════════════════════════════╗
- * ║  Challenge: INPUT                                                          ║
+ * ║  Lab: INPUT                                                                ║
  * ║  Tool with structured input schema                                         ║
  * ╚══════════════════════════════════════════════════════════════════════════════╝
  *
@@ -89,7 +89,6 @@ const TOOLS: Anthropic.Tool[] = [
   },
 ];
 
-
 export function Chat() {
   const [messages, setMessages] = useState<MessageParam[]>([]);
   const [input, setInput] = useState('');
@@ -99,8 +98,8 @@ export function Chat() {
     const text = input.trim();
     if (!text || loading) return;
 
-    const history: MessageParam[] = [...messages, { role: 'user', content: text }];
-    setMessages(history);
+    const memory: MessageParam[] = [...messages, { role: 'user', content: text }];
+    setMessages(memory);
     setInput('');
     setLoading(true);
 
@@ -109,11 +108,11 @@ export function Chat() {
         model: 'claude-haiku-4-5',
         max_tokens: 1024,
         tools: TOOLS,
-        messages: history,
+        messages: memory,
       });
 
-      history.push({ role: 'assistant', content: response.content });
-      setMessages([...history]);
+      memory.push({ role: 'assistant', content: response.content });
+      setMessages([...memory]);
 
       if (response.stop_reason === 'tool_use') {
         const toolBlock = response.content.find((b) => b.type === 'tool_use')!;
@@ -134,18 +133,18 @@ export function Chat() {
           content,
         };
 
-        history.push({ role: 'user', content: [toolResult] });
-        setMessages([...history]);
+        memory.push({ role: 'user', content: [toolResult] });
+        setMessages([...memory]);
 
         const finalResponse = await client.messages.create({
           model: 'claude-haiku-4-5',
           max_tokens: 1024,
           tools: TOOLS,
-          messages: history,
+          messages: memory,
         });
 
-        history.push({ role: 'assistant', content: finalResponse.content });
-        setMessages([...history]);
+        memory.push({ role: 'assistant', content: finalResponse.content });
+        setMessages([...memory]);
       }
     } finally {
       setLoading(false);

@@ -20,17 +20,17 @@ export function Chat() {
   const [loading, setLoading] = useState(false);
 
   const handleSend = async () => {
-      try {
+    try {
       const text = input.trim();
       if (!text || loading) return;
-  
+
       const userMessage: MessageParam = { role: 'user', content: text };
       setMessages((prev) => [...prev, userMessage]);
       setInput('');
       setLoading(true);
-      } finally {
-        setLoading(false);
-      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   const renderMessageContent = (msg: MessageParam) => {

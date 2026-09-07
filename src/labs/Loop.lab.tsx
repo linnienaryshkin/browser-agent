@@ -1,6 +1,6 @@
 /**
  * ╔══════════════════════════════════════════════════════════════════════════════╗
- * ║  Challenge: LOOP                                                           ║
+ * ║  Lab: LOOP                                                                 ║
  * ║  Multi-step tool reasoning: the model plans across multiple steps           ║
  * ╚══════════════════════════════════════════════════════════════════════════════╝
  *
@@ -130,8 +130,8 @@ export function Chat() {
     const text = input.trim();
     if (!text || loading) return;
 
-    const history: MessageParam[] = [...messages, { role: 'user', content: text }];
-    setMessages(history);
+    const memory: MessageParam[] = [...messages, { role: 'user', content: text }];
+    setMessages(memory);
     setInput('');
     setLoading(true);
 
@@ -143,11 +143,11 @@ export function Chat() {
           model: 'claude-haiku-4-5',
           max_tokens: 1024,
           tools: TOOLS,
-          messages: history,
+          messages: memory,
         });
 
-        history.push({ role: 'assistant', content: response.content });
-        setMessages([...history]);
+        memory.push({ role: 'assistant', content: response.content });
+        setMessages([...memory]);
         stopReason = response.stop_reason ?? 'end_turn';
 
         if (stopReason === 'tool_use') {
@@ -158,8 +158,8 @@ export function Chat() {
             content: executeTool(block.name, block.input as Record<string, unknown>),
           }));
 
-          history.push({ role: 'user', content: toolResults });
-          setMessages([...history]);
+          memory.push({ role: 'user', content: toolResults });
+          setMessages([...memory]);
         }
       }
     } finally {
