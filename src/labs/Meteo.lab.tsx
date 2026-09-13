@@ -85,11 +85,17 @@ async function mcpCall(method: string, params?: Record<string, unknown>) {
         const parsed = JSON.parse(trimmed.slice(5).trim());
         if (parsed.result !== undefined || parsed.error !== undefined) return parsed;
         lastData = parsed;
-      } catch { /* skip malformed lines */ }
+      } catch {
+        /* skip malformed lines */
+      }
     }
   }
   if (lastData) return lastData;
-  try { return JSON.parse(text); } catch { return null; }
+  try {
+    return JSON.parse(text);
+  } catch {
+    return null;
+  }
 }
 
 const LOCAL_TOOLS: Anthropic.Tool[] = [

@@ -35,4 +35,15 @@ A single-page React app where each **lab** is a self-contained chat component. T
 
 ### Lab file conventions
 
-Each `.lab.tsx` opens with a large JSDoc comment block (ASCII box-drawing) documenting the concept, architecture, and a TEST prompt. The `Chat` component follows with no default export. Reference the existing labs (`Loop.lab.tsx`, `Mcp.lab.tsx`, `Meteo.lab.tsx`) for the established patterns around the agent loop, tool execution, and MCP discovery.
+Each `.lab.tsx` opens with a large JSDoc comment block (ASCII box-drawing) documenting the concept, architecture, and a TEST prompt. The `Chat` component follows with no default export. Reference the existing labs (`Loop.lab.tsx`, `Streaming.lab.tsx`, `Mcp.lab.tsx`, `Meteo.lab.tsx`) for the established patterns around the agent loop, tool execution, streaming, and MCP discovery.
+
+| Lab | Path | Concept |
+|-----|------|---------|
+| Hello | `/hello` | Single-turn text response |
+| Memory | `/memory` | Multi-turn conversation history |
+| Tool | `/tool` | Single tool call |
+| Input | `/input` | Structured input / user-facing forms |
+| Loop | `/loop` | Agentic loop with parallel tool use |
+| Streaming | `/streaming` | Token-by-token streaming + TTFT measurement |
+| MCP | `/mcp-lab` | In-process MCP lamp server (JSON-RPC 2.0) |
+| Meteo | `/meteo` | Remote MCP weather server (SSE transport) |
