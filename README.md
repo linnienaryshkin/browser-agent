@@ -28,6 +28,7 @@ npm run dev            # http://localhost:5173
 | Input | Input schema | Add `set_theme` with structured input (`{ theme: "light" | "dark" }`) |
 | Loop | Multi-step | Multiple tool calls in one request with a `while` loop |
 | MCP | Remote tools | Discover and call tools from a local MCP server via Streamable HTTP |
+| Meteo | External MCP | Connect to a real remote MCP server (open-meteo) via Vite proxy — no local server code |
 
 ## Scripts
 

@@ -15,6 +15,7 @@ import { Chat as ChatTool } from './labs/Tool.lab';
 import { Chat as ChatInput } from './labs/Input.lab';
 import { Chat as ChatLoop } from './labs/Loop.lab';
 import { Chat as ChatMcp } from './labs/Mcp.lab';
+import { Chat as ChatMeteo } from './labs/Meteo.lab';
 import { Chat as ChatExercise } from './labs/Exercise';
 
 const TABS = [
@@ -25,6 +26,7 @@ const TABS = [
   { label: 'Input', path: '/input' },
   { label: 'Loop', path: '/loop' },
   { label: 'MCP', path: '/mcp-lab' },
+  { label: 'Meteo', path: '/meteo' },
 ];
 
 interface LayoutProps {
@@ -87,6 +89,7 @@ function Layout({ mode, onToggleTheme }: LayoutProps) {
           <Route path="/input" element={<ChatInput />} />
           <Route path="/loop" element={<ChatLoop />} />
           <Route path="/mcp-lab" element={<ChatMcp />} />
+          <Route path="/meteo" element={<ChatMeteo />} />
         </Routes>
       </Box>
     </Box>

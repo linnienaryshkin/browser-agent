@@ -32,6 +32,21 @@ export default defineConfig({
           });
         },
       },
+      /**
+       * Proxy for the remote open-meteo MCP server to avoid CORS issues.
+       * Uses the public, keyless open-meteo MCP server at open-meteo.caseyjhand.com.
+       */
+      '/api/open-meteo.caseyjhand': {
+        target: 'https://open-meteo.caseyjhand.com',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/open-meteo.caseyjhand/, '/mcp'),
+        configure: (proxy) => {
+          proxy.on('proxyReq', (proxyReq) => {
+            proxyReq.removeHeader('origin');
+            proxyReq.removeHeader('referer');
+          });
+        },
+      },
     },
   },
 })
