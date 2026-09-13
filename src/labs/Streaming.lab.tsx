@@ -45,6 +45,7 @@
 
 import { useState, useRef } from 'react';
 import Anthropic from '@anthropic-ai/sdk';
+import { useModel } from '../ModelContext';
 import type { MessageParam, ToolResultBlockParam } from '@anthropic-ai/sdk/resources/messages';
 import Box from '@mui/material/Box';
 import TextField from '@mui/material/TextField';
@@ -100,6 +101,7 @@ interface StreamingEntry {
 }
 
 export function Chat() {
+  const model = useModel();
   const [entries, setEntries] = useState<StreamingEntry[]>([]);
   const [streamingText, setStreamingText] = useState<string | null>(null); // null = not streaming
   const [input, setInput] = useState('');
@@ -126,7 +128,7 @@ export function Chat() {
         setStreamingText(''); // show empty bubble immediately
 
         const stream = client.messages.stream({
-          model: 'claude-haiku-4-5',
+          model: model,
           max_tokens: 1024,
           tools: TOOLS,
           messages: memory,

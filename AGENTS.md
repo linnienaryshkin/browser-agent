@@ -6,7 +6,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ```bash
 npm run dev       # Start Vite dev server (http://localhost:5173)
-npm run build     # Type-check + production build
 npm run lint      # ESLint
 npm run format    # Prettier (formats src/)
 ```
@@ -15,9 +14,11 @@ npm run format    # Prettier (formats src/)
 
 This is a React + TypeScript + Vite app called **BrowserAgent** — a hands-on learning curriculum for the Anthropic TypeScript SDK. It targets frontend engineers preparing for the Anthropic Architect Certification.
 
-**Lab structure** — each lab lives in `src/labs/lab.<name>.tsx` or uses the `Hello.lab.tsx` naming pattern as a self-contained chat component with progressively more features. Each lab is fully working and ready to run. `Exercise.tsx` is a blank template for learners who want to code from scratch.
+**Lab structure** — each lab lives in `src/labs/<Name>.lab.tsx` as a self-contained chat component with progressively more features. Each lab is fully working and ready to run. `Exercise.tsx` is a blank template for learners who want to code from scratch.
 
-**App shell** (`src/App.tsx`) — renders labs as tabs via React Router. Theme state (light/dark) lives in `main.tsx` and is persisted in the `?theme=` URL param. Exposed globals: `window.getTheme()`, `window.setTheme(mode)`, `window.toggleTheme()`.
+**App shell** (`src/App.tsx`) — renders labs as tabs via React Router. A hamburger menu in the AppBar provides: theme toggle (light/dark) and model picker (Haiku / Sonnet / Opus). Theme state lives in `main.tsx` and is persisted in the `?theme=` URL param. Model state lives in `main.tsx` and is provided to all labs via `ModelContext` (`src/ModelContext.ts`). Exposed globals: `window.getTheme()`, `window.setTheme(mode)`.
+
+**Model selection** — the active model is stored in React state in `Root` and distributed via `ModelContext`. Labs call `useModel()` from `src/ModelContext.ts` to read it. Default: `claude-haiku-4-5`.
 
 **API proxy** — the Vite dev server proxies `/api/anthropic` → `https://api.anthropic.com` to avoid CORS in the browser. Components must set `baseURL: \`${window.location.origin}/api/anthropic\`` and `dangerouslyAllowBrowser: true` when constructing the Anthropic client.
 
@@ -27,14 +28,16 @@ This is a React + TypeScript + Vite app called **BrowserAgent** — a hands-on l
 
 ## Lab Progression
 
-| Tab | File | Key concept |
-| ----- | ------ | ------------- |
-| Hello | `Hello.lab.tsx` | Create client, send message, display reply |
-| Memory | `lab.memory.tsx` | Pass full history (stateless API) |
-| Tool | `lab.tool.tsx` | `get_theme` tool, tool execution, `stop_reason` |
-| Input | `lab.input.tsx` | `set_theme` with structured input schema |
-| Loop | `lab.loop.tsx` | Multi-step tool reasoning with while loop |
-| MCP | `lab.mcp.tsx` | Discover + call remote MCP tools |
+| Tab       | File                   | Key concept                                       |
+| --------- | ---------------------- | ------------------------------------------------- |
+| Hello     | `Hello.lab.tsx`        | Create client, send message, display reply        |
+| Memory    | `Memory.lab.tsx`       | Pass full history (stateless API)                 |
+| Tool      | `Tool.lab.tsx`         | `get_theme` tool, tool execution, `stop_reason`   |
+| Input     | `Input.lab.tsx`        | `set_theme` with structured input schema          |
+| Loop      | `Loop.lab.tsx`         | Multi-step tool reasoning with while loop         |
+| Streaming | `Streaming.lab.tsx`    | Token-by-token streaming + TTFT measurement       |
+| MCP       | `Mcp.lab.tsx`          | Discover + call tools from a local MCP server     |
+| Meteo     | `Meteo.lab.tsx`        | Connect to a real remote MCP server (open-meteo)  |
 
 ## Certification Domains Covered
 

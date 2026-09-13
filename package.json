@@ -5,10 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "format": "prettier --write src",
-    "preview": "vite preview"
+    "format": "prettier --write src"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.52.0",

@@ -4,10 +4,11 @@ import { ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import { makeTheme } from './theme';
 import App from './App';
+import { ModelContext } from './ModelContext';
+import type { ModelId } from './types';
 
 declare global {
   interface Window {
-    toggleTheme: () => void;
     getTheme: () => 'light' | 'dark';
     setTheme: (mode: 'light' | 'dark') => void;
   }
@@ -26,14 +27,7 @@ function setUrlMode(mode: 'light' | 'dark') {
 // eslint-disable-next-line react-refresh/only-export-components
 function Root() {
   const [mode, setMode] = useState<'light' | 'dark'>(getUrlMode);
-
-  const toggle = useCallback(() => {
-    setMode((prev) => {
-      const next = prev === 'dark' ? 'light' : 'dark';
-      setUrlMode(next);
-      return next;
-    });
-  }, []);
+  const [model, setModelState] = useState<ModelId>('claude-haiku-4-5');
 
   // Keep in sync if the user edits the URL manually (back/forward navigation).
   useEffect(() => {
@@ -53,16 +47,18 @@ function Root() {
   }, []);
 
   useEffect(() => {
-    window.toggleTheme = toggle;
     window.getTheme = getTheme;
     window.setTheme = setTheme;
-  }, [toggle, getTheme, setTheme]);
+    console.info('[BrowserAgent] extensions mounted: window.getTheme, window.setTheme');
+  }, [getTheme, setTheme]);
 
   return (
-    <ThemeProvider theme={makeTheme(mode)}>
-      <CssBaseline />
-      <App mode={mode} onToggleTheme={toggle} />
-    </ThemeProvider>
+    <ModelContext.Provider value={model}>
+      <ThemeProvider theme={makeTheme(mode)}>
+        <CssBaseline />
+        <App mode={mode} onSetTheme={setTheme} model={model} onSetModel={setModelState} />
+      </ThemeProvider>
+    </ModelContext.Provider>
   );
 }
 

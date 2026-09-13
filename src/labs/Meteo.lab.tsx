@@ -50,6 +50,7 @@
 
 import { useState, useEffect } from 'react';
 import Anthropic from '@anthropic-ai/sdk';
+import { useModel } from '../ModelContext';
 import type { MessageParam, ToolResultBlockParam } from '@anthropic-ai/sdk/resources/messages';
 import Box from '@mui/material/Box';
 import TextField from '@mui/material/TextField';
@@ -159,6 +160,7 @@ async function executeTool(name: string, input: Record<string, unknown>): Promis
 }
 
 export function Chat() {
+  const model = useModel();
   const [messages, setMessages] = useState<MessageParam[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -182,7 +184,7 @@ export function Chat() {
 
       while (stopReason !== 'end_turn') {
         const response = await client.messages.create({
-          model: 'claude-haiku-4-5',
+          model: model,
           max_tokens: 1024,
           tools,
           messages: memory,

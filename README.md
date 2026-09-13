@@ -20,24 +20,28 @@ npm run dev            # http://localhost:5173
 
 ## Labs
 
-| Tab | Name | What you learn |
-| ----- | ------ | ---------------- |
-| Hello | First message | Create an Anthropic client, send a message, display the reply |
-| Memory | Context | Pass full history so the model remembers prior turns |
-| Tool | Tool use | Define `get_theme`, handle `stop_reason: 'tool_use'`, execute tools |
-| Input | Input schema | Add `set_theme` with structured input (`{ theme: "light" | "dark" }`) |
-| Loop | Multi-step | Multiple tool calls in one request with a `while` loop |
-| MCP | Remote tools | Discover and call tools from a local MCP server via Streamable HTTP |
-| Meteo | External MCP | Connect to a real remote MCP server (open-meteo) via Vite proxy — no local server code |
+| Tab       | Name            | What you learn                                                               |
+| --------- | --------------- | ---------------------------------------------------------------------------- |
+| Hello     | First message   | Create an Anthropic client, send a message, display the reply                |
+| Memory    | Context         | Pass full history so the model remembers prior turns                         |
+| Tool      | Tool use        | Define `get_theme`, handle `stop_reason: 'tool_use'`, execute tools          |
+| Input     | Input schema    | Add `set_theme` with structured input (`{ theme: "light" \| "dark" }`)      |
+| Loop      | Multi-step      | Multiple tool calls in one request with a `while` loop                       |
+| Streaming | Streaming       | Token-by-token streaming with TTFT measurement                               |
+| MCP       | Local MCP       | Discover and call tools from a local MCP server via Streamable HTTP          |
+| Meteo     | Remote MCP      | Connect to a real remote MCP server (open-meteo) via Vite proxy              |
+
+## UI
+
+The top-right hamburger menu lets you switch the **theme** (light/dark) and pick the **model** (Haiku / Sonnet / Opus) used across all labs.
 
 ## Scripts
 
-| Command | Description |
-| --------- | ------------- |
-| `npm run dev` | Start the development server (includes MCP server at `/mcp`) |
-| `npm run build` | Type-check and build for production |
-| `npm run lint` | Run ESLint |
-| `npm run format` | Format code with Prettier |
+| Command          | Description                                          |
+| ---------------- | ---------------------------------------------------- |
+| `npm run dev`    | Start the development server (includes MCP at `/mcp`) |
+| `npm run lint`   | Run ESLint                                           |
+| `npm run format` | Format code with Prettier                            |
 
 ## Tech Stack
 

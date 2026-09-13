@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import Box from '@mui/material/Box';
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
@@ -5,8 +6,15 @@ import Toolbar from '@mui/material/Toolbar';
 import AppBar from '@mui/material/AppBar';
 import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
+import Menu from '@mui/material/Menu';
+import MenuItem from '@mui/material/MenuItem';
+import ListItemIcon from '@mui/material/ListItemIcon';
+import ListItemText from '@mui/material/ListItemText';
+import Divider from '@mui/material/Divider';
+import MenuIcon from '@mui/icons-material/Menu';
 import Brightness4Icon from '@mui/icons-material/Brightness4';
 import Brightness7Icon from '@mui/icons-material/Brightness7';
+import CheckIcon from '@mui/icons-material/Check';
 import GitHubIcon from '@mui/icons-material/GitHub';
 import { BrowserRouter, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { Chat as ChatHello } from './labs/Hello.lab';
@@ -18,6 +26,7 @@ import { Chat as ChatMcp } from './labs/Mcp.lab';
 import { Chat as ChatMeteo } from './labs/Meteo.lab';
 import { Chat as ChatStreaming } from './labs/Streaming.lab';
 import { Chat as ChatExercise } from './labs/Exercise';
+import type { ModelId } from './types';
 
 const TABS = [
   { label: 'Exercise', path: '/' },
@@ -31,15 +40,24 @@ const TABS = [
   { label: 'Meteo', path: '/meteo' },
 ];
 
+const MODELS: { id: ModelId; label: string }[] = [
+  { id: 'claude-haiku-4-5', label: 'Haiku' },
+  { id: 'claude-sonnet-4-6', label: 'Sonnet' },
+  { id: 'claude-opus-4-7', label: 'Opus' },
+];
+
 interface LayoutProps {
   mode: 'light' | 'dark';
-  onToggleTheme: () => void;
+  onSetTheme: (mode: 'light' | 'dark') => void;
+  model: ModelId;
+  onSetModel: (model: ModelId) => void;
 }
 
-function Layout({ mode, onToggleTheme }: LayoutProps) {
+function Layout({ mode, onSetTheme, model, onSetModel }: LayoutProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const tab = TABS.findIndex((t) => t.path === location.pathname);
+  const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
@@ -75,9 +93,49 @@ function Layout({ mode, onToggleTheme }: LayoutProps) {
             ))}
           </Tabs>
           <Box sx={{ flexGrow: 1 }} />
-          <IconButton color="inherit" onClick={onToggleTheme} aria-label="toggle theme">
-            {mode === 'dark' ? <Brightness7Icon /> : <Brightness4Icon />}
+          <IconButton
+            color="inherit"
+            onClick={(e) => setMenuAnchor(e.currentTarget)}
+            aria-label="open menu"
+          >
+            <MenuIcon />
           </IconButton>
+          <Menu
+            anchorEl={menuAnchor}
+            open={Boolean(menuAnchor)}
+            onClose={() => setMenuAnchor(null)}
+            transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+            anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+          >
+            <MenuItem
+              onClick={() => {
+                onSetTheme(mode === 'dark' ? 'light' : 'dark');
+                setMenuAnchor(null);
+              }}
+            >
+              <ListItemIcon>
+                {mode === 'dark' ? (
+                  <Brightness7Icon fontSize="small" />
+                ) : (
+                  <Brightness4Icon fontSize="small" />
+                )}
+              </ListItemIcon>
+              <ListItemText>{mode === 'dark' ? 'Light mode' : 'Dark mode'}</ListItemText>
+            </MenuItem>
+            <Divider />
+            {MODELS.map((m) => (
+              <MenuItem
+                key={m.id}
+                onClick={() => {
+                  onSetModel(m.id);
+                  setMenuAnchor(null);
+                }}
+              >
+                <ListItemIcon>{model === m.id && <CheckIcon fontSize="small" />}</ListItemIcon>
+                <ListItemText>{m.label}</ListItemText>
+              </MenuItem>
+            ))}
+          </Menu>
         </Toolbar>
       </AppBar>
 
@@ -101,13 +159,15 @@ function Layout({ mode, onToggleTheme }: LayoutProps) {
 
 interface AppProps {
   mode: 'light' | 'dark';
-  onToggleTheme: () => void;
+  onSetTheme: (mode: 'light' | 'dark') => void;
+  model: ModelId;
+  onSetModel: (model: ModelId) => void;
 }
 
-export default function App({ mode, onToggleTheme }: AppProps) {
+export default function App({ mode, onSetTheme, model, onSetModel }: AppProps) {
   return (
     <BrowserRouter>
-      <Layout mode={mode} onToggleTheme={onToggleTheme} />
+      <Layout mode={mode} onSetTheme={onSetTheme} model={model} onSetModel={onSetModel} />
     </BrowserRouter>
   );
 }

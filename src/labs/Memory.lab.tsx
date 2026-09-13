@@ -80,6 +80,7 @@
 
 import { useState } from 'react';
 import Anthropic from '@anthropic-ai/sdk';
+import { useModel } from '../ModelContext';
 import type { MessageParam } from '@anthropic-ai/sdk/resources/messages';
 import Box from '@mui/material/Box';
 import TextField from '@mui/material/TextField';
@@ -95,6 +96,7 @@ const client = new Anthropic({
 });
 
 export function Chat() {
+  const model = useModel();
   const [messages, setMessages] = useState<MessageParam[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -110,7 +112,7 @@ export function Chat() {
 
     try {
       const response = await client.messages.create({
-        model: 'claude-haiku-4-5',
+        model: model,
         max_tokens: 1024,
         messages: memory,
       });
