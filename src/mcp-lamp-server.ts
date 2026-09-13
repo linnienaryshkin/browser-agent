@@ -4,15 +4,51 @@
  */
 
 import type { Connect } from 'vite';
-import { userInfo } from 'os';
+import { execSync } from 'child_process';
 
 const TOOLS = [
   {
-    name: 'get_real_name',
-    description: 'Get the real name of the current operating system user.',
+    name: 'get_system_color_scheme',
+    description: 'Get the OS-level color scheme preference. Returns "dark" or "light".',
     inputSchema: { type: 'object', properties: {}, required: [] },
   },
 ];
+
+function getSystemColorScheme(): 'dark' | 'light' {
+  try {
+    const { platform } = process;
+
+    if (platform === 'darwin') {
+      // absent in light mode, set to "Dark" in dark mode
+      const result = execSync('defaults read -g AppleInterfaceStyle 2>/dev/null', {
+        encoding: 'utf8',
+        timeout: 1000,
+      }).trim();
+      return result.toLowerCase() === 'dark' ? 'dark' : 'light';
+    }
+
+    if (platform === 'win32') {
+      // 0 = dark apps, 1 = light apps
+      const result = execSync(
+        'reg query "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize" /v AppsUseLightTheme',
+        { encoding: 'utf8', timeout: 1000 },
+      );
+      return result.includes('0x0') ? 'dark' : 'light';
+    }
+
+    if (platform === 'linux') {
+      // Works on GNOME; other DEs may not support this key
+      const result = execSync(
+        'gsettings get org.gnome.desktop.interface color-scheme 2>/dev/null',
+        { encoding: 'utf8', timeout: 1000 },
+      ).trim();
+      return result.includes('dark') ? 'dark' : 'light';
+    }
+  } catch {
+    // fall through to default
+  }
+  return 'light';
+}
 
 function handleRequest(body: {
   jsonrpc: string;
@@ -47,8 +83,7 @@ function handleRequest(body: {
     case 'tools/call': {
       const toolName = (params as { name: string })?.name;
 
-      if (toolName === 'get_real_name') {
-        const info = userInfo();
+      if (toolName === 'get_system_color_scheme') {
         return {
           jsonrpc: '2.0',
           id,
@@ -56,7 +91,7 @@ function handleRequest(body: {
             content: [
               {
                 type: 'text',
-                text: JSON.stringify({ username: info.username, homedir: info.homedir }),
+                text: JSON.stringify({ scheme: getSystemColorScheme() }),
               },
             ],
           },

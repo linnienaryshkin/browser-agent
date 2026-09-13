@@ -41,7 +41,7 @@
  * │    id: 1,                                                                   │
  * │    result: {                                                                │
  * │      tools: [                                                               │
- * │        { name: "get_real_name", description: "...", inputSchema: {} }      │
+ * │        { name: "get_system_color_scheme", description: "...", inputSchema: {} } │
  * │      ]                                                                      │
  * │    }                                                                        │
  * │  }                                                                          │
@@ -50,7 +50,8 @@
  * ┌─────────────────────────────────────────────────────────────────────────────┐
  * │  Integration Pattern                                                        │
  * │                                                                             │
- * │  const localTools: Anthropic.Tool[] = [get_theme, set_theme];               │
+ * │  const localTools: Anthropic.Tool[] = [get_theme, set_theme];              │
+ * │  // get_system_color_scheme comes from MCP, not local tools               │
  * │  const mcpTools = await discoverMcpTools();                                 │
  * │  const allTools = [...localTools, ...mcpTools];                             │
  * │                                                                             │
@@ -75,7 +76,9 @@
  * │  orchestrate the actual execution.                                         │
  * └─────────────────────────────────────────────────────────────────────────────┘
  *
- * TEST: Say "Tell me the computer owner's name" — model calls get_real_name via MCP.
+ * TEST: Say "Does my app theme match my system color scheme?" — model calls
+ *       get_system_color_scheme via MCP and get_theme locally, then compares them.
+ *       Say "Match the app theme to my system" — it also calls set_theme if needed.
  */
 
 import { useState, useEffect } from 'react';
