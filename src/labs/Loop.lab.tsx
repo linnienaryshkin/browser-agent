@@ -1,7 +1,7 @@
 /**
  * ╔══════════════════════════════════════════════════════════════════════════════╗
- * ║  Lab: LOOP                                                                 ║
- * ║  Multi-step tool reasoning: the model plans across multiple steps           ║
+ * ║  Lab: LOOP                                                                   ║
+ * ║  Multi-step tool reasoning: the model plans across multiple steps            ║
  * ╚══════════════════════════════════════════════════════════════════════════════╝
  *
  * GOAL: Enable the model to call multiple tools in sequence without waiting
@@ -14,11 +14,11 @@
  * │  at once. The model may narrate its reasoning in a text block and request   │
  * │  a tool call in the same response. Both arrive together in content[].       │
  * │                                                                             │
- * │   content[0]  type: text      "Let me check the current theme."            │
- * │   content[1]  type: tool_use  get_theme  id: tu_01                         │
+ * │   content[0]  type: text      "Let me check the current theme."             │
+ * │   content[1]  type: tool_use  get_theme  id: tu_01                          │
  * │                                                                             │
- * │  Your renderer must handle every block type. Anything unexpected is safe   │
- * │  to display as raw data — future block types are additive.                 │
+ * │  Your renderer must handle every block type. Anything unexpected is safe    │
+ * │  to display as raw data — future block types are additive.                  │
  * └─────────────────────────────────────────────────────────────────────────────┘
  *
  * ┌─────────────────────────────────────────────────────────────────────────────┐
@@ -27,11 +27,11 @@
  * │  A "turn" is one API call. A single user message can trigger several turns  │
  * │  before the model finishes. Each turn appends to the shared history:        │
  * │                                                                             │
- * │   Turn 1  user asks ──────────────▶ model: tool_use (get_theme)            │
- * │   Turn 2  tool_result appended ───▶ model: tool_use (set_theme)            │
- * │   Turn 3  tool_result appended ───▶ model: text, end_turn                  │
+ * │   Turn 1  user asks ──────────────▶ model: tool_use (get_theme)             │
+ * │   Turn 2  tool_result appended ───▶ model: tool_use (set_theme)             │
+ * │   Turn 3  tool_result appended ───▶ model: text, end_turn                   │
  * │                                                                             │
- * │  The user types once. The loop runs autonomously until end_turn.           │
+ * │  The user types once. The loop runs autonomously until end_turn.            │
  * └─────────────────────────────────────────────────────────────────────────────┘
  *
  * ┌─────────────────────────────────────────────────────────────────────────────┐
@@ -47,9 +47,9 @@
  * │  Returning all results in one user message is required — the API treats     │
  * │  a tool_use block without a matching tool_result as an error.               │
  * │                                                                             │
- * │  Guard against infinite loops. A misbehaving model or a tool that always   │
+ * │  Guard against infinite loops. A misbehaving model or a tool that always    │
  * │  returns an error can cause the loop to spin indefinitely, burning tokens.  │
- * │  Always cap the number of iterations and break with an error if exceeded.  │
+ * │  Always cap the number of iterations and break with an error if exceeded.   │
  * └─────────────────────────────────────────────────────────────────────────────┘
  *
  * ┌─────────────────────────────────────────────────────────────────────────────┐
@@ -69,7 +69,7 @@
  * │     │                    │                                                  │
  * │     │◀── text ───────────│  end_turn                                        │
  * │                                                                             │
- * │  You may execute the tools concurrently on your side — the API only cares  │
+ * │  You may execute the tools concurrently on your side — the API only cares   │
  * │  that all results arrive together before the next generation step.          │
  * └─────────────────────────────────────────────────────────────────────────────┘
  *

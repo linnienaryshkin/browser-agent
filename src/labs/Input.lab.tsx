@@ -1,14 +1,20 @@
 /**
  * ╔══════════════════════════════════════════════════════════════════════════════╗
- * ║  Lab: INPUT                                                                ║
- * ║  Tool with structured input schema                                         ║
+ * ║  Lab: INPUT                                                                  ║
+ * ║  Tool with structured input schema                                           ║
  * ╚══════════════════════════════════════════════════════════════════════════════╝
+ *
+ * PROBLEM: Now, we want to give the model an ability to change the application theme.
+ * The same way as user could do it via the upper right corner of the app.
+ * (also, you could check the theme by opening devtools and typing `window.setTheme('light' | 'dark')` in the console)
  *
  * GOAL: Add `set_theme` — a tool that accepts structured input.
  *       The model must pass a validated argument to call it.
  *
  * ┌─────────────────────────────────────────────────────────────────────────────┐
  * │  JSON Schema — the contract between you and the model                       │
+ * │                                                                             │
+ * │  https://json-schema.org/                                                   │
  * │                                                                             │
  * │  Every tool's input_schema is a JSON Schema object that tells the model     │
  * │  exactly what arguments it may pass. The API uses the schema to guide       │
@@ -19,7 +25,7 @@
  * │   required   — which arguments the model must always provide                │
  * │                                                                             │
  * │  The description on each property is read by the model and shapes how it    │
- * │  chooses values. Write it for the model, not for humans.                    │
+ * │  chooses values.                                                            │
  * └─────────────────────────────────────────────────────────────────────────────┘
  *
  * ┌─────────────────────────────────────────────────────────────────────────────┐
@@ -40,13 +46,13 @@
  * ┌─────────────────────────────────────────────────────────────────────────────┐
  * │  Sequence — tool call with structured input                                 │
  * │                                                                             │
- * │   Client            API                 Tool                               │
+ * │   Client            API                 Tool                                │
  * │     │                 │                   │                                 │
  * │     │── user msg ────▶│                   │                                 │
  * │     │   + tool defs   │                   │                                 │
  * │     │                 │                   │                                 │
  * │     │◀── tool_use ────│  stop_reason:     │                                 │
- * │     │    set_theme    │  "tool_use"        │                                 │
+ * │     │    set_theme    │  "tool_use"       │                                 │
  * │     │    input: dark  │                   │                                 │
  * │     │                 │                   │                                 │
  * │     │─────────────────┼── setTheme(dark) ▶│                                 │
@@ -56,10 +62,8 @@
  * │     │   (+ history)   │                   │                                 │
  * │     │                 │                   │                                 │
  * │     │◀── text ────────│  stop_reason:     │                                 │
- * │                        │  "end_turn"       │                                 │
+ * │                       │  "end_turn"       │                                 │
  * └─────────────────────────────────────────────────────────────────────────────┘
- *
- * TEST: Ask "Switch to dark mode" — model should call set_theme with theme: dark.
  */
 
 import { useState } from 'react';

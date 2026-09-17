@@ -1,7 +1,7 @@
 /**
  * ╔══════════════════════════════════════════════════════════════════════════════╗
- * ║  Lab: HELLO                                                                ║
- * ║  Send your first message to the Anthropic API                              ║
+ * ║  Lab: HELLO                                                                  ║
+ * ║  Send your first message to the Anthropic API                                ║
  * ╚══════════════════════════════════════════════════════════════════════════════╝
  *
  * GOAL: Create an Anthropic client, send a single user message, display the reply.
@@ -9,7 +9,7 @@
  * ┌─────────────────────────────────────────────────────────────────────────────┐
  * │  How a request reaches Anthropic from the browser                           │
  * │                                                                             │
- * │   Browser          Vite dev server        Anthropic API                    │
+ * │   Browser          Vite dev server        Anthropic API                     │
  * │     │                    │                      │                           │
  * │     │── SDK call ───────▶│                      │                           │
  * │     │                    │── proxied request ──▶│                           │
@@ -39,35 +39,24 @@
  * │  What a response carries — the Message object                               │
  * │                                                                             │
  * │  id            — unique identifier for this message                         │
- * │  type          — always "message"                                           │
  * │  role          — always "assistant"                                         │
  * │  model         — the model that generated the response                      │
- * │  content       — array of typed blocks; never a plain string                │
- * │  stop_reason   — why generation ended:                                      │
+ * │  content       — array of typed blocks.                                     │
+ * │  stop_reason   — why generation ended: (needs later for the agent loop)     │
  * │                    end_turn       natural stopping point                    │
  * │                    tool_use       model invoked one or more tools           │
  * │                    max_tokens     token budget exhausted                    │
  * │                    stop_sequence  a custom stop sequence was matched        │
- * │  stop_sequence — the matched stop sequence string, if any                  │
  * │  usage         — input / output token counts; drives billing and rate limits│
- * │                                                                             │
- * │  content is always an array even when there is only one block. This         │
- * │  design supports mixed responses: text alongside tool calls in one turn.    │
  * └─────────────────────────────────────────────────────────────────────────────┘
  *
  * ┌─────────────────────────────────────────────────────────────────────────────┐
  * │  Content block types                                                        │
  * │                                                                             │
  * │   text        — plain text the model wrote; the common case                 │
- * │   tool_use    — model's request to call a function (Tool lab)               │
- * │   tool_result — your answer to a tool_use request (Tool lab)                │
  * │                                                                             │
- * │  A single assistant message can mix all three. Always iterate the array;   │
- * │  never assume only one block exists.                                        │
+ * │  A single assistant message can mix different block types.                  |
  * └─────────────────────────────────────────────────────────────────────────────┘
- *
- * KEY INSIGHT: This chat has NO memory. Each send is a fresh, independent call.
- *             Ask "what did I just say?" — it won't know. Fixed in Memory lab.
  */
 
 import { useState } from 'react';

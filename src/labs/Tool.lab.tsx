@@ -1,34 +1,38 @@
 /**
  * ╔══════════════════════════════════════════════════════════════════════════════╗
- * ║  Lab: TOOL                                                                 ║
- * ║  Give the model a tool it can call                                         ║
+ * ║  Lab: TOOL                                                                   ║
+ * ║  Give the model a tool it can call                                           ║
  * ╚══════════════════════════════════════════════════════════════════════════════╝
  *
+ * PROBLEM: The model is a text generator. But now we wanna give it ability to interact with out application.
+ * Let the model know what the current application theme is.
+ * (disclaimer, it's changeable via upper right corner of the app)
+ * (also, you could check the theme by opening devtools and typing `window.getTheme()` in the console)
+ *
  * GOAL: Define a `get_theme` tool. When the model decides to use it,
- *       execute it and return the result. This is the "agent loop."
+ *       execute it and return the result.
  *
  * ┌─────────────────────────────────────────────────────────────────────────────┐
  * │  stop_reason — how the model signals what happens next                      │
  * │                                                                             │
- * │  Every response carries a stop_reason that tells you what to do.           │
- * │  See the Hello lab for the full field reference; the values relevant here: │
+ * │  Every response carries a stop_reason that tells you what to do.            │
+ * │  See the Hello lab for the full field reference; the values relevant here:  │
  * │                                                                             │
  * │   end_turn       — model finished naturally; render the text and wait       │
  * │   tool_use       — model wants a function called; execute it and loop back  │
  * │   max_tokens     — budget exhausted before the model could finish           │
- * │   stop_sequence  — a custom stop sequence you defined was matched           │
  * │                                                                             │
- * │  Without tools, every response is end_turn. With tools, end_turn arrives   │
- * │  only after every tool_use round trip has been completed.                  │
+ * │  Without tools, every response is end_turn. With tools, end_turn arrives    │
+ * │  only after every tool_use round trip has been completed.                   │
  * └─────────────────────────────────────────────────────────────────────────────┘
  *
  * ┌─────────────────────────────────────────────────────────────────────────────┐
  * │  How the model calls external functions                                     │
  * │                                                                             │
- * │  The model never executes code. When it needs external data it emits a      │
- * │  tool_use block — a structured call request — and stops. The client reads  │
+ * │  The model couldn't executes code. When it needs external data it emits     │
+ * │  a tool_use block — a structured call request — and stops. The client reads │
  * │  that block, runs the real function locally, wraps the result in a          │
- * │  tool_result block, appends it to the history, and calls the API again.    │
+ * │  tool_result block, appends it to the history, and calls the API again.     │
  * │  The model reads the result and continues reasoning from there.             │
  * │                                                                             │
  * │  A tool definition has three parts:                                         │
@@ -40,13 +44,13 @@
  * ┌─────────────────────────────────────────────────────────────────────────────┐
  * │  Agent loop — one tool call                                                 │
  * │                                                                             │
- * │   Client            API                 Tool                               │
+ * │   Client            API                 Tool                                │
  * │     │                 │                   │                                 │
  * │     │── user msg ────▶│                   │                                 │
  * │     │   + tool defs   │                   │                                 │
  * │     │                 │                   │                                 │
  * │     │◀── tool_use ────│  stop_reason:     │                                 │
- * │     │    get_theme    │  "tool_use"        │                                 │
+ * │     │    get_theme    │  "tool_use"       │                                 │
  * │     │                 │                   │                                 │
  * │     │─────────────────┼── execute ───────▶│                                 │
  * │     │◀────────────────┼── result ─────────│                                 │
@@ -55,10 +59,8 @@
  * │     │   (+ history)   │                   │                                 │
  * │     │                 │                   │                                 │
  * │     │◀── text ────────│  stop_reason:     │                                 │
- * │                        │  "end_turn"       │                                 │
+ * │                       │  "end_turn"       │                                 │
  * └─────────────────────────────────────────────────────────────────────────────┘
- *
- * TEST: Ask "What theme is the app using?" — model should call get_theme.
  */
 
 import { useState } from 'react';

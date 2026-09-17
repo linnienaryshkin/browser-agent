@@ -25,11 +25,11 @@ import { Chat as ChatLoop } from './labs/Loop.lab';
 import { Chat as ChatMcp } from './labs/Mcp.lab';
 import { Chat as ChatMeteo } from './labs/Meteo.lab';
 import { Chat as ChatStreaming } from './labs/Streaming.lab';
-import { Chat as ChatExercise } from './labs/Exercise';
+import { Chat as ChatCanvas } from './labs/Canvas';
 import type { ModelId } from './types';
 
 const TABS = [
-  { label: 'Exercise', path: '/' },
+  { label: 'Canvas', path: '/' },
   { label: 'Hello', path: '/hello' },
   { label: 'Memory', path: '/memory' },
   { label: 'Tool', path: '/tool' },
@@ -142,7 +142,7 @@ function Layout({ mode, onSetTheme, model, onSetModel }: LayoutProps) {
       <Toolbar />
       <Box sx={{ flexGrow: 1, overflow: 'hidden' }}>
         <Routes>
-          <Route path="/" element={<ChatExercise />} />
+          <Route path="/" element={<ChatCanvas />} />
           <Route path="/hello" element={<ChatHello />} />
           <Route path="/memory" element={<ChatMemory />} />
           <Route path="/tool" element={<ChatTool />} />

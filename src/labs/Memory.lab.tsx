@@ -1,11 +1,13 @@
 /**
  * ╔══════════════════════════════════════════════════════════════════════════════╗
- * ║  Lab: MEMORY                                                               ║
- * ║  Make the chat remember previous messages                                  ║
+ * ║  Lab: MEMORY                                                                 ║
+ * ║  Make the chat remember previous messages                                    ║
  * ╚══════════════════════════════════════════════════════════════════════════════╝
  *
- * GOAL: Pass the full conversation history on every API call so the model
- *       knows what was said before.
+ * PROBLEM: When you send another message, the model forgets everything you said before.
+ * Try sending "my name is L", then "what's my name?" — it won't know. The model has no memory.
+ *
+ * GOAL: Make it remember the context
  *
  * ┌─────────────────────────────────────────────────────────────────────────────┐
  * │  A stateless API                                                            │
@@ -14,9 +16,9 @@
  * │  discarded the moment it completes. The client is the sole source of        │
  * │  conversation state and must replay the full history on every call.         │
  * │                                                                             │
- * │   Turn 1   ──▶  [ user ]                                                   │
- * │   Turn 2   ──▶  [ user · assistant · user ]                                │
- * │   Turn 3   ──▶  [ user · assistant · user · assistant · user ]             │
+ * │   Turn 1   ──▶  [ user ]                                                    │
+ * │   Turn 2   ──▶  [ user · assistant · user ]                                 │
+ * │   Turn 3   ──▶  [ user · assistant · user · assistant · user ]              │
  * │                   ▲ grows by two messages each round trip                   │
  * │                                                                             │
  * │  Lose the array and you lose the conversation.                              │
@@ -51,10 +53,10 @@
  * │  one token from that distribution. This repeats until a stop condition is   │
  * │  met (end-of-sequence token, max_tokens, or a stop sequence).               │
  * │                                                                             │
- * │  Without prior turns the model has no context, so sending only the latest  │
+ * │  Without prior turns the model has no context, so sending only the latest   │
  * │  user message is indistinguishable from starting a brand-new conversation.  │
  * │                                                                             │
- * │  Cost implication: each turn re-sends the entire history, so token usage   │
+ * │  Cost implication: each turn re-sends the entire history, so token usage    │
  * │  (and cost) grows roughly linearly with conversation length.                │
  * └─────────────────────────────────────────────────────────────────────────────┘
  *
@@ -71,11 +73,6 @@
  * │  and the nearest chunks are injected into the prompt. The model reads them  │
  * │  as ordinary context — it never "memorised" the documents.                  │
  * └─────────────────────────────────────────────────────────────────────────────┘
- *
- * KEY INSIGHT: The client is the source of truth for conversation state.
- *             If you lose the array, you lose the memory.
- *
- * TEST: Say "My name is X", then ask "What's my name?" — it should know.
  */
 
 import { useState } from 'react';

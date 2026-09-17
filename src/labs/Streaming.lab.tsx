@@ -1,8 +1,10 @@
 /**
  * ╔══════════════════════════════════════════════════════════════════════════════╗
- * ║  Lab: STREAMING                                                            ║
- * ║  Same agent loop as Loop, but responses arrive token-by-token via stream   ║
+ * ║  Lab: STREAMING                                                              ║
+ * ║  Same agent loop as Loop, but responses arrive token-by-token via stream     ║
  * ╚══════════════════════════════════════════════════════════════════════════════╝
+ *
+ * PROBLEM: TODO
  *
  * GOAL: Replace the blocking messages.create() call with messages.stream() so
  *       text blocks render incrementally. Measure time-to-first-token (TTFT)
@@ -11,36 +13,34 @@
  * ┌─────────────────────────────────────────────────────────────────────────────┐
  * │  Streaming — how it works                                                   │
  * │                                                                             │
- * │  client.messages.stream() returns a Stream helper. Subscribe to events:    │
+ * │  client.messages.stream() returns a Stream helper. Subscribe to events:     │
  * │                                                                             │
- * │   "text"        fired for each text delta; arg is the incremental string   │
- * │   "message"     fired once when the full message is ready (end of stream)  │
+ * │   "text"        fired for each text delta; arg is the incremental string    │
+ * │   "message"     fired once when the full message is ready (end of stream).  │
  * │                                                                             │
- * │  During streaming we hold a "draft" assistant message that accumulates     │
- * │  text. Once the stream ends we replace it with the final message object    │
- * │  (which includes tool_use blocks with fully assembled inputs).             │
+ * │  During streaming we hold a "draft" assistant message that accumulates      │
+ * │  text. Once the stream ends we replace it with the final message object     │
+ * │  (which includes tool_use blocks with fully assembled inputs).              │
  * └─────────────────────────────────────────────────────────────────────────────┘
  *
  * ┌─────────────────────────────────────────────────────────────────────────────┐
  * │  Time-to-first-token (TTFT)                                                 │
  * │                                                                             │
- * │  TTFT = time from sending the request until the first "text" event fires.  │
- * │  It reflects network latency + model scheduling, not generation speed.     │
- * │  Record performance.now() at request start, capture it on the first text   │
+ * │  TTFT = time from sending the request until the first "text" event fires.   │
+ * │  It reflects network latency + model scheduling, not generation speed.      │
+ * │  Record performance.now() at request start, capture it on the first text    │
  * │  delta, display alongside the assistant turn.                               │
  * └─────────────────────────────────────────────────────────────────────────────┘
  *
  * ┌─────────────────────────────────────────────────────────────────────────────┐
  * │  Tool use with streaming                                                    │
  * │                                                                             │
- * │  tool_use blocks arrive fully assembled only in the final "message" event. │
- * │  Wait for the stream to finish before executing tools — stream().finalMessage()│
- * │  (or the "message" event) gives you the complete response.                 │
+ * │  tool_use blocks arrive fully assembled only in the final "message" event.  │
+ * │  Wait for the stream to finish before executing tools                       │
+ * │  stream().finalMessage()                                                    │
+ * │                                                                             │
+ * │  (or the "message" event) gives you the complete response.                  │
  * └─────────────────────────────────────────────────────────────────────────────┘
- *
- * TEST: "Get the current theme and tell me what it is" — watch text stream in;
- *       TTFT badge appears when the first token arrives.
- *       "Write a short poem about the current theme" — longer stream, visible token-by-token.
  */
 
 import { useState, useRef } from 'react';

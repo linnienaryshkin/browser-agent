@@ -14,7 +14,7 @@ npm run format    # Prettier (formats src/)
 
 This is a React + TypeScript + Vite app called **BrowserAgent** — a hands-on learning curriculum for the Anthropic TypeScript SDK. It targets frontend engineers preparing for the Anthropic Architect Certification.
 
-**Lab structure** — each lab lives in `src/labs/<Name>.lab.tsx` as a self-contained chat component with progressively more features. Each lab is fully working and ready to run. `Exercise.tsx` is a blank template for learners who want to code from scratch.
+**Lab structure** — each lab lives in `src/labs/<Name>.lab.tsx` as a self-contained chat component with progressively more features. Each lab is fully working and ready to run. `Canvas.tsx` is a blank template for learners who want to code from scratch.
 
 **App shell** (`src/App.tsx`) — renders labs as tabs via React Router. A hamburger menu in the AppBar provides: theme toggle (light/dark) and model picker (Haiku / Sonnet / Opus). Theme state lives in `main.tsx` and is persisted in the `?theme=` URL param. Model state lives in `main.tsx` and is provided to all labs via `ModelContext` (`src/ModelContext.ts`). Exposed globals: `window.getTheme()`, `window.setTheme(mode)`.
 
