@@ -109,6 +109,8 @@ export function Chat() {
   // ref so event handlers close over the latest value without stale closure issues
   const ttftRef = useRef<number | null>(null);
 
+  // --------------------------------------------------------------------
+  // This is the main function is extend for required functionality
   const handleSend = async () => {
     const text = input.trim();
     if (!text || loading) return;
@@ -175,6 +177,7 @@ export function Chat() {
       setLoading(false);
     }
   };
+  // --------------------------------------------------------------------
 
   const renderBlocks = (msg: MessageParam) => {
     const blocks =

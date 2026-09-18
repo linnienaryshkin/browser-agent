@@ -188,6 +188,8 @@ export function Chat() {
     return `Unknown tool: ${name}`;
   }
 
+  // --------------------------------------------------------------------
+  // This is the main function is extend for required functionality
   const handleSend = async () => {
     const text = input.trim();
     if (!text || loading) return;
@@ -230,6 +232,7 @@ export function Chat() {
       setLoading(false);
     }
   };
+  // --------------------------------------------------------------------
 
   const renderMessageContent = (msg: MessageParam) => {
     const blocks =

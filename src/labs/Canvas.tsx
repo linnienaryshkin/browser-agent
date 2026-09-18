@@ -19,6 +19,8 @@ export function Chat() {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
 
+  // --------------------------------------------------------------------
+  // This is the main function is extend for required functionality
   const handleSend = async () => {
     try {
       const text = input.trim();
@@ -32,6 +34,7 @@ export function Chat() {
       setLoading(false);
     }
   };
+  // --------------------------------------------------------------------
 
   const renderMessageContent = (msg: MessageParam) => {
     const blocks =

@@ -28,6 +28,8 @@ Either way, don't move on until you can narrate the runtime flow of the current 
 
 Each lab file starts with a comment block: **`PROBLEM`** (motivation) → **`GOAL`** (what to implement) → **theory blocks** (diagrams, field descriptions, mental models). The working solution follows below. Read the comment top-to-bottom before touching the code.
 
+One lab is a single React component. The component's state is the conversation history, and the render function maps that state to the UI. The `handleSend` function is the main entry point for user input and where you implement the lab's feature. Everything else is boilerplate React infrastructure code copied and pasted from lab to lab.
+
 The Anthropic SDK is well-typed — hover over any type or method in your editor for inline docs. Use that alongside the theory blocks.
 
 ---
