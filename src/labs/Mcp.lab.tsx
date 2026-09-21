@@ -1,8 +1,8 @@
 /**
  * ╔══════════════════════════════════════════════════════════════════════════════╗
- * ║  Lab: MCP                                                                  ║
- * ║  Discover and integrate remote tools via Model Context Protocol (MCP)      ║
- * ╚══════════════════════════════════════════════════════════════════════╝
+ * ║  Lab: MCP                                                                    ║
+ * ║  Discover and integrate remote tools via Model Context Protocol (MCP)        ║
+ * ╚══════════════════════════════════════════════════════════════════════════════╝
  *
  * GOAL: Connect to a local MCP server to discover remote tools, add them to
  *       the agent's toolset, and call them alongside local tools.
@@ -13,15 +13,15 @@
  * │  MCP (Model Context Protocol) is a standard for AI agents to discover and   │
  * │  use tools from any server, not just your app.                              │
  * │                                                                             │
- * │  ┌─────────────┐       ┌──────────────┐       ┌──────────────┐             │
- * │  │   Browser   │───────│ Vite Proxy   │───────│ MCP Server   │             │
- * │  │  (client)   │       │  (POST /mcp) │       │  (local)     │             │
- * │  └─────────────┘       └──────────────┘       └──────────────┘             │
+ * │  ┌─────────────┐       ┌──────────────┐       ┌──────────────┐              │
+ * │  │   Browser   │───────│ Vite Proxy   │───────│ MCP Server   │              │
+ * │  │  (client)   │       │  (POST /mcp) │       │  (local)     │              │
+ * │  └─────────────┘       └──────────────┘       └──────────────┘              │
  * │                                                                             │
  * │  1. Client: tools/list RPC call                                             │
- * │  2. Server: Returns [{ name, description, inputSchema }, ...]              │
- * │  3. Client: Converts to Anthropic SDK format                               │
- * │  4. Client: Includes in tools array with local tools                       │
+ * │  2. Server: Returns [{ name, description, inputSchema }, ...]               │
+ * │  3. Client: Converts to Anthropic SDK format                                │
+ * │  4. Client: Includes in tools array with local tools                        │
  * └─────────────────────────────────────────────────────────────────────────────┘
  *
  * ┌─────────────────────────────────────────────────────────────────────────────┐
@@ -31,7 +31,7 @@
  * │  {                                                                          │
  * │    jsonrpc: "2.0",                                                          │
  * │    id: 1,                                                                   │
- * │    method: "tools/list",           ◀── MCP server exposes tools/list       │
+ * │    method: "tools/list",           ◀── MCP server exposes tools/list        │
  * │    params: {}                                                               │
  * │  }                                                                          │
  * │                                                                             │
@@ -41,7 +41,7 @@
  * │    id: 1,                                                                   │
  * │    result: {                                                                │
  * │      tools: [                                                               │
- * │        { name: "get_system_color_scheme", description: "...", inputSchema: {} } │
+ * │        { name: "get_color_scheme", description: "...", inputSchema: {} }    │
  * │      ]                                                                      │
  * │    }                                                                        │
  * │  }                                                                          │
@@ -50,30 +50,30 @@
  * ┌─────────────────────────────────────────────────────────────────────────────┐
  * │  Integration Pattern                                                        │
  * │                                                                             │
- * │  const localTools: Anthropic.Tool[] = [get_theme, set_theme];              │
- * │  // get_system_color_scheme comes from MCP, not local tools               │
+ * │  const localTools: Anthropic.Tool[] = [get_theme, set_theme];               │
+ * │  // get_system_color_scheme comes from MCP, not local tools                 │
  * │  const mcpTools = await discoverMcpTools();                                 │
  * │  const allTools = [...localTools, ...mcpTools];                             │
  * │                                                                             │
  * │  When executing:                                                            │
- * │  • If tool is in LOCAL_TOOL_NAMES → executeLocalTool(...)                  │
+ * │  • If tool is in LOCAL_TOOL_NAMES → executeLocalTool(...)                   │
  * │  • Else → callMcpTool(...) via RPC                                          │
  * │                                                                             │
- * │  The model doesn't care where tools come from — it just sees their         │
+ * │  The model doesn't care where tools come from — it just sees their          │
  * │  schemas and decides when to call them.                                     │
  * └─────────────────────────────────────────────────────────────────────────────┘
  *
  * ┌─────────────────────────────────────────────────────────────────────────────┐
  * │  What This Teaches                                                          │
  * │                                                                             │
- * │  • Tool Discovery: Agents can dynamically learn what's available           │
+ * │  • Tool Discovery: Agents can dynamically learn what's available            │
  * │  • Composition: Mix local and remote tools seamlessly                       │
- * │  • Protocols: MCP enables AI agents to interact with any system            │
+ * │  • Protocols: MCP enables AI agents to interact with any system             │
  * │  • Routing: Determine where each tool executes based on availability        │
  * │                                                                             │
- * │  Real-world: Connect to browser automation, APIs, databases, file          │
- * │  systems—all via MCP servers. The model plans what to call, you            │
- * │  orchestrate the actual execution.                                         │
+ * │  Real-world: Connect to browser automation, APIs, databases, file           │
+ * │  systems—all via MCP servers. The model plans what to call, you             │
+ * │  orchestrate the actual execution.                                          │
  * └─────────────────────────────────────────────────────────────────────────────┘
  *
  * TEST: Say "Does my app theme match my system color scheme?" — model calls

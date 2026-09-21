@@ -4,7 +4,7 @@
  * ║  Same agent loop as Loop, but responses arrive token-by-token via stream     ║
  * ╚══════════════════════════════════════════════════════════════════════════════╝
  *
- * PROBLEM: TODO
+ * PROBLEM: Our users came to use with "Your application is too slow"
  *
  * GOAL: Replace the blocking messages.create() call with messages.stream() so
  *       text blocks render incrementally. Measure time-to-first-token (TTFT)
@@ -33,13 +33,20 @@
  * └─────────────────────────────────────────────────────────────────────────────┘
  *
  * ┌─────────────────────────────────────────────────────────────────────────────┐
- * │  Tool use with streaming                                                    │
+ * │  Why TTFT — and what the KV cache has to do with it                         │
  * │                                                                             │
- * │  tool_use blocks arrive fully assembled only in the final "message" event.  │
- * │  Wait for the stream to finish before executing tools                       │
- * │  stream().finalMessage()                                                    │
+ * │  GenAI models generate one token at a time. Before the first token can      │
+ * │  appear, the model must process every token in the prompt (the "prefill"    │
+ * │  phase): it computes key/value attention tensors for each position and      │
+ * │  stores them in the KV cache. Only after that is done does autoregressive   │
+ * │  decoding begin and the first output token emerge.                          │
  * │                                                                             │
- * │  (or the "message" event) gives you the complete response.                  │
+ * │  The KV cache is the memory of those intermediate attention states. Once    │
+ * │  built it lets subsequent tokens be decoded cheaply — but building it for   │
+ * │  a long prompt is expensive and dominates latency. That is why TTFT, not    │
+ * │  tokens-per-second, is the right metric for perceived responsiveness:       │
+ * │  the user is blocked until prefill finishes, regardless of how fast the     │
+ * │  model generates afterwards.                                                │
  * └─────────────────────────────────────────────────────────────────────────────┘
  */
 
