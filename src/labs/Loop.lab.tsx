@@ -4,6 +4,10 @@
  * ║  Multi-step tool reasoning: the model plans across multiple steps            ║
  * ╚══════════════════════════════════════════════════════════════════════════════╝
  *
+ * PROBLEM: Now, let's try to combine tools together. Ask chat to "toggle the theme" and see what happens.
+ * The model will call get_theme, the receive results, and ask call tool again, set_theme, to change the theme.
+ * That's where a loop comes in. The model will call tools in sequence, and the client must execute them and return results to the model until the model is done.
+ *
  * GOAL: Enable the model to call multiple tools in sequence without waiting
  *       for user input. The agent loop continues until stop_reason is "end_turn".
  *
@@ -72,9 +76,6 @@
  * │  You may execute the tools concurrently on your side — the API only cares   │
  * │  that all results arrive together before the next generation step.          │
  * └─────────────────────────────────────────────────────────────────────────────┘
- *
- * TEST: Ask "Get the current theme and tell me what it is" — one loop.
- *       Ask "If we're in light mode, switch to dark; otherwise stay put" — model reasons first.
  */
 
 import { useState } from 'react';
