@@ -1,52 +1,98 @@
 /**
- * ╔══════════════════════════════════════════════════════════════════════════════╗
- * ║  Lab: STREAMING                                                              ║
- * ║  Same agent loop as Loop, but responses arrive token-by-token via stream     ║
- * ╚══════════════════════════════════════════════════════════════════════════════╝
+ * ╔═════════════════════════════════════════════════════════════════════════════╗
+ * ║  Lab: STREAMING                                                             ║
+ * ║  Same agent loop as Loop, but responses arrive token-by-token via stream    ║
+ * ╚═════════════════════════════════════════════════════════════════════════════╝
  *
- * PROBLEM: Our users came to use with "Your application is too slow"
+ * PROBLEM: Users complain "Your application is too slow."
  *
  * GOAL: Replace the blocking messages.create() call with messages.stream() so
- *       text blocks render incrementally. Measure time-to-first-token (TTFT)
- *       for each generation step.
+ *       text blocks render token-by-token. Measure time-to-first-token (TTFT)
+ *       for each generation step and display it on the assistant bubble.
  *
  * ┌─────────────────────────────────────────────────────────────────────────────┐
- * │  Streaming — how it works                                                   │
+ * │  How LLM inference works (why streaming helps)                              │
+ * ├─────────────────────────────────────────────────────────────────────────────┤
  * │                                                                             │
- * │  client.messages.stream() returns a Stream helper. Subscribe to events:     │
+ * │         prompt text                                                         │
+ * │              │                                                              │
+ * │              ▼                                                              │
+ * │  ┌───────────────────────┐                                                  │
+ * │  │     Tokenization      │  Text → integer token IDs from the model vocab.  │
+ * │  │     "Hello world"     │  The model never processes raw characters,       │
+ * │  │   → [9906, 1917, …]   │  only the numerical token sequence.              │
+ * │  └───────────┬───────────┘                                                  │
+ * │              │                                                              │
+ * │              ▼                                                              │
+ * │  ┌───────────────────────┐                                                  │
+ * │  │     Prefill phase     │  All tokens processed in parallel.               │
+ * │  │                       │  The transformer computes query, key, and value  │
+ * │  │   KV cache built for  │  tensors for every position (self-attention),    │
+ * │  │   every input token   │  then stores them in the KV cache.               │
+ * │  │                       │  Cost scales with prompt length — the user is    │
+ * │  │  ◄── TTFT ends here   │  fully blocked until this phase completes.       │
+ * │  └───────────┬───────────┘                                                  │
+ * │              │  first output token                                          │
+ * │              ▼                          ┌────────────────────┐              │
+ * │  ┌───────────────────────┐              │      KV cache       │             │
+ * │  │    Decoding phase     │─────────────►│  key/value tensors  │             │
+ * │  │                       │◄─────────────│  from prefill +     │             │
+ * │  │  one token at a time  │  next token  │  all prior steps    │             │
+ * │  │   (autoregressive)    │              │  reused, never      │             │
+ * │  │                       │              │  recomputed         │             │
+ * │  └───────────┬───────────┘              └────────────────────┘              │
+ * │              │  each new token is appended to the KV cache                  │
+ * │              ▼                                                              │
+ * │       streamed output                                                       │
  * │                                                                             │
- * │   "text"        fired for each text delta; arg is the incremental string    │
- * │   "message"     fired once when the full message is ready (end of stream).  │
- * │                                                                             │
- * │  During streaming we hold a "draft" assistant message that accumulates      │
- * │  text. Once the stream ends we replace it with the final message object     │
- * │  (which includes tool_use blocks with fully assembled inputs).              │
+ * ├─────────────────────────────────────────────────────────────────────────────┤
+ * │  Without streaming: client blocks until decoding finishes, then renders.    │
+ * │  With streaming:    tokens appear as soon as decoding begins.               │
+ * │  Perceived latency drops from (prefill + full decode) to just prefill.      │
  * └─────────────────────────────────────────────────────────────────────────────┘
  *
  * ┌─────────────────────────────────────────────────────────────────────────────┐
- * │  Time-to-first-token (TTFT)                                                 │
+ * │  SDK streaming API                                                          │
  * │                                                                             │
- * │  TTFT = time from sending the request until the first "text" event fires.   │
- * │  It reflects network latency + model scheduling, not generation speed.      │
- * │  Record performance.now() at request start, capture it on the first text    │
- * │  delta, display alongside the assistant turn.                               │
+ * │  client.messages.stream(params) — same params as messages.create().         │
+ * │  Returns a Stream helper; subscribe to events before awaiting completion:   │
+ * │                                                                             │
+ * │   stream.on("text", (delta) => ...)                                         │
+ * │     Fired for each text delta as the model decodes. The argument is the     │
+ * │     incremental string fragment (not the full text so far).                 │
+ * │                                                                             │
+ * │   await stream.finalMessage()                                               │
+ * │     Resolves once the stream closes. Returns the complete Message object    │
+ * │     — including fully assembled tool_use blocks with parsed inputs.         │
+ * │     Use this (not the "message" event) to commit the turn to history.       │
+ * │                                                                             │
+ * │  Draft-bubble pattern                                                       │
+ * │    Keep a separate piece of state (e.g. streamingText: string | null) that  │
+ * │    accumulates text deltas and renders a live "typing" bubble.              │
+ * │    Set it to null before the request and after finalMessage() resolves,     │
+ * │    then commit the completed Message to your entries array.                 │
+ * │    This way tool_use blocks (no text) are never shown in the draft bubble.  │
+ * │                                                                             │
+ * │  Tool loop integration                                                      │
+ * │    Replace messages.create() with messages.stream() inside the while loop   │
+ * │    from the Loop lab. Call finalMessage() to get stop_reason and content;   │
+ * │    the rest of the loop (tool execution, memory push) stays the same.       │
  * └─────────────────────────────────────────────────────────────────────────────┘
  *
  * ┌─────────────────────────────────────────────────────────────────────────────┐
- * │  Why TTFT — and what the KV cache has to do with it                         │
+ * │  Measuring TTFT                                                             │
  * │                                                                             │
- * │  GenAI models generate one token at a time. Before the first token can      │
- * │  appear, the model must process every token in the prompt (the "prefill"    │
- * │  phase): it computes key/value attention tensors for each position and      │
- * │  stores them in the KV cache. Only after that is done does autoregressive   │
- * │  decoding begin and the first output token emerge.                          │
+ * │  TTFT = elapsed time from sending the request until the first "text" event. │
+ * │  It captures the prefill wall-clock time (network + model scheduling).      │
  * │                                                                             │
- * │  The KV cache is the memory of those intermediate attention states. Once    │
- * │  built it lets subsequent tokens be decoded cheaply — but building it for   │
- * │  a long prompt is expensive and dominates latency. That is why TTFT, not    │
- * │  tokens-per-second, is the right metric for perceived responsiveness:       │
- * │  the user is blocked until prefill finishes, regardless of how fast the     │
- * │  model generates afterwards.                                                │
+ * │  Implementation hints:                                                      │
+ * │   • Record performance.now() just before calling messages.stream().         │
+ * │   • Inside the "text" handler, capture the elapsed time on the first delta  │
+ * │     only (guard with a flag or a ref initialised to null).                  │
+ * │   • Use useRef (not useState) for the flag — event handlers close over it   │
+ * │     and it must not trigger re-renders mid-stream.                          │
+ * │   • After finalMessage() resolves, attach the captured value to the entry   │
+ * │     and display it as a chip on the assistant bubble.                       │
  * └─────────────────────────────────────────────────────────────────────────────┘
  */
 
