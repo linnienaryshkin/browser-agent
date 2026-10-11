@@ -4,9 +4,9 @@
  * ║  Tool with structured input schema                                           ║
  * ╚══════════════════════════════════════════════════════════════════════════════╝
  *
- * PROBLEM: Now, we want to give the model an ability to change the application theme.
- * The same way as user could do it via the upper right corner of the app.
- * (also, you could check the theme by opening devtools and typing `window.setTheme('light' | 'dark')` in the console)
+ * PROBLEM: The model can read the theme but cannot change it — give it a tool that
+ *          accepts a structured argument so it can set the theme programmatically.
+ *          (verify via devtools: `window.setTheme('light' | 'dark')`)
  *
  * GOAL: Add `set_theme` — a tool that accepts structured input.
  *       The model must pass a validated argument to call it.

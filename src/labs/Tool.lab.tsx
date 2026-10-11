@@ -4,10 +4,9 @@
  * ║  Give the model a tool it can call                                           ║
  * ╚══════════════════════════════════════════════════════════════════════════════╝
  *
- * PROBLEM: The model is a text generator. But now we wanna give it ability to interact with out application.
- * Let the model know what the current application theme is.
- * (disclaimer, it's changeable via upper right corner of the app)
- * (also, you could check the theme by opening devtools and typing `window.getTheme()` in the console)
+ * PROBLEM: The model is a text generator — now we want to give it the ability to interact with our application.
+ * Let it know what the current application theme is.
+ * Theme is toggleable via the upper-right corner of the app, or via `window.getTheme()` in devtools.
  *
  * GOAL: Define a `get_theme` tool. When the model decides to use it,
  *       execute it and return the result.
@@ -29,7 +28,7 @@
  * ┌─────────────────────────────────────────────────────────────────────────────┐
  * │  How the model calls external functions                                     │
  * │                                                                             │
- * │  The model couldn't executes code. When it needs external data it emits     │
+ * │  The model cannot execute code. When it needs external data it emits        │
  * │  a tool_use block — a structured call request — and stops. The client reads │
  * │  that block, runs the real function locally, wraps the result in a          │
  * │  tool_result block, appends it to the history, and calls the API again.     │

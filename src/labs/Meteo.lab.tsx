@@ -1,24 +1,24 @@
 /**
  * ╔══════════════════════════════════════════════════════════════════════════════╗
- * ║  Lab: Meteo                                                                 ║
+ * ║  Lab: METEO                                                                 ║
  * ║  Is it light outside right now? Ask the agent — it will figure it out.     ║
  * ╚══════════════════════════════════════════════════════════════════════════════╝
  *
- * GOAL: Connect to a *real remote* MCP server over HTTP, proxied through Vite,
+ * GOAL: Connect to a real remote MCP server over HTTP, proxied through Vite,
  *       to get weather and daylight data — no local server code, no API keys.
  *
  * ┌─────────────────────────────────────────────────────────────────────────────┐
  * │  Architecture                                                               │
  * │                                                                             │
- * │  Browser → POST /api/open-meteo.caseyjhand → Vite proxy → open-meteo.caseyjhand.com  │
+ * │  Browser → POST /api/open-meteo → Vite proxy → open-meteo.caseyjhand.com   │
  * │                                                                             │
- * │  The remote MCP server uses SSE transport (Streamable HTTP):               │
+ * │  The remote MCP server uses SSE transport (Streamable HTTP):                │
  * │  responses are Server-Sent Events with "data: {...}" lines.                 │
  * │  No API key required — it wraps the open-meteo.com free API.               │
  * └─────────────────────────────────────────────────────────────────────────────┘
  *
  * ┌─────────────────────────────────────────────────────────────────────────────┐
- * │  MCP Tools Available (subset used here)                                     │
+ * │  MCP tools available (subset used here)                                     │
  * │                                                                             │
  * │  openmeteo_search_locations(name)                                           │
  * │    → lat, lon, timezone, country, region for a place name                   │
@@ -28,20 +28,25 @@
  * └─────────────────────────────────────────────────────────────────────────────┘
  *
  * ┌─────────────────────────────────────────────────────────────────────────────┐
- * │  Agent Flow                                                                 │
+ * │  Agent flow                                                                 │
  * │                                                                             │
  * │  User: "Is it light outside?"                                               │
- * │    1. Agent calls openmeteo_search_locations — or asks the user            │
+ * │    1. Agent calls openmeteo_search_locations — or asks the user             │
  * │    2. Agent calls openmeteo_get_forecast with is_day + sunrise/sunset       │
  * │    3. Agent replies: "It's currently daytime in Berlin (sunrise 06:14…)"   │
  * └─────────────────────────────────────────────────────────────────────────────┘
  *
  * ┌─────────────────────────────────────────────────────────────────────────────┐
- * │  What This Teaches                                                          │
+ * │  What this teaches                                                          │
  * │                                                                             │
- * │  • Real remote MCP: no local server code — just a proxy entry in vite.config│
- * │  • SSE transport: parsing "data: {...}" event-stream responses              │
- * │  • Free public APIs: open-meteo, no account or key needed                   │
+ * │  Real remote MCP: the server runs externally — a single proxy entry in      │
+ * │  vite.config is all the local setup required.                               │
+ * │                                                                             │
+ * │  SSE transport: the server streams responses as "data: {...}" event lines;  │
+ * │  the client must parse each line to extract the JSON-RPC result.            │
+ * │                                                                             │
+ * │  Free public APIs: open-meteo requires no account or API key, making it     │
+ * │  easy to experiment with real-world data in a learning environment.         │
  * └─────────────────────────────────────────────────────────────────────────────┘
  *
  * TEST: Say "Is it light outside right now?" then give your city when asked,

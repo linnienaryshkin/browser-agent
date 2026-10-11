@@ -25,53 +25,32 @@
  * └─────────────────────────────────────────────────────────────────────────────┘
  *
  * ┌─────────────────────────────────────────────────────────────────────────────┐
- * │  Tokenization — how text enters the model                                   │
+ * │  Types of memory                                                            │
+ * ├─────────────────────────────────────────────────────────────────────────────┤
  * │                                                                             │
- * │  Before any processing, the entire message history is converted to tokens   │
- * │  — sub-word units drawn from the model's fixed vocabulary. Common words     │
- * │  map to a single token; rare or long words split into several. The model    │
- * │  never sees characters or words — only token IDs.                           │
+ * │  In-context  (this lab)                                                     │
+ * │    The message array is passed directly in the request. Always visible to   │
+ * │    the model — no retrieval step needed. Limited by the context window;     │
+ * │    cost grows linearly as the conversation lengthens.                       │
  * │                                                                             │
- * │  "What is quantum computing?"                                               │
- * │       │                                                                     │
- * │       ▼                                                                     │
- * │   [ What ][ is ][ quantum ][ computing ][ ? ]                               │
- * │                      │                                                      │
- * │               multiple meanings:                                            │
- * │               physics unit / quantum mechanics / quantum computing          │
- * │               — resolved in the next step (embedding + attention)           │
+ * │  Episodic                                                                   │
+ * │    A log of past events stored outside the context window, timestamped so   │
+ * │    you can answer "what happened in session X?" Fetched on demand and       │
+ * │    injected as needed — the model never sees it automatically.              │
  * │                                                                             │
- * │  Explore tokenization interactively: https://platform.openai.com/tokenizer  │
- * └─────────────────────────────────────────────────────────────────────────────┘
- *
- * ┌─────────────────────────────────────────────────────────────────────────────┐
- * │  Next-token prediction — why the whole context must be present              │
+ * │  Semantic                                                                   │
+ * │    Facts and knowledge extracted and deduplicated across conversations,     │
+ * │    stored as embeddings in a vector store. Retrieved by similarity search   │
+ * │    at query time and injected into the prompt. Powers RAG.                  │
  * │                                                                             │
- * │  An LLM is a next-token predictor. At each step it receives every token     │
- * │  produced so far — input and output alike — and estimates a probability     │
- * │  distribution over the entire vocabulary for what comes next, then samples  │
- * │  one token from that distribution. This repeats until a stop condition is   │
- * │  met (end-of-sequence token, max_tokens, or a stop sequence).               │
+ * │  Procedural                                                                 │
+ * │    Behavioral rules, preferences, and reasoning patterns — often kept in    │
+ * │    a system prompt or a structured profile file. Tells the model how to     │
+ * │    act rather than what happened or what is true.                           │
  * │                                                                             │
- * │  Without prior turns the model has no context, so sending only the latest   │
- * │  user message is indistinguishable from starting a brand-new conversation.  │
- * │                                                                             │
- * │  Cost implication: each turn re-sends the entire history, so token usage    │
- * │  (and cost) grows roughly linearly with conversation length.                │
- * └─────────────────────────────────────────────────────────────────────────────┘
- *
- * ┌─────────────────────────────────────────────────────────────────────────────┐
- * │  Embeddings — semantic vectors                                              │
- * │                                                                             │
- * │  Before attention can resolve meaning, each token is projected into a       │
- * │  high-dimensional numeric vector (an embedding). The vector encodes what    │
- * │  the token typically means across training data. Tokens with similar        │
- * │  meanings cluster together in that space.                                   │
- * │                                                                             │
- * │  This same idea powers RAG (Retrieval-Augmented Generation): documents are  │
- * │  stored as embedding vectors, the user query is embedded at query time,     │
- * │  and the nearest chunks are injected into the prompt. The model reads them  │
- * │  as ordinary context — it never "memorised" the documents.                  │
+ * ├─────────────────────────────────────────────────────────────────────────────┤
+ * │  This lab uses in-context memory — the simplest form. The other types       │
+ * │  require retrieval infrastructure but let memory grow without bound.        │
  * └─────────────────────────────────────────────────────────────────────────────┘
  */
 

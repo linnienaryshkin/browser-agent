@@ -21,6 +21,7 @@
  * │  │     Tokenization      │  Text → integer token IDs from the model vocab.  │
  * │  │     "Hello world"     │  The model never processes raw characters,       │
  * │  │   → [9906, 1917, …]   │  only the numerical token sequence.              │
+ * │  │                       │  Try it: platform.openai.com/tokenizer           │
  * │  └───────────┬───────────┘                                                  │
  * │              │                                                              │
  * │              ▼                                                              │
@@ -34,12 +35,12 @@
  * │  └───────────┬───────────┘                                                  │
  * │              │  first output token                                          │
  * │              ▼                          ┌────────────────────┐              │
- * │  ┌───────────────────────┐              │      KV cache       │             │
- * │  │    Decoding phase     │─────────────►│  key/value tensors  │             │
- * │  │                       │◄─────────────│  from prefill +     │             │
- * │  │  one token at a time  │  next token  │  all prior steps    │             │
- * │  │   (autoregressive)    │              │  reused, never      │             │
- * │  │                       │              │  recomputed         │             │
+ * │  ┌───────────────────────┐              │      KV cache      │              │
+ * │  │    Decoding phase     │─────────────►│  key/value tensors │              │
+ * │  │                       │◄─────────────│  from prefill +    │              │
+ * │  │  one token at a time  │  next token  │  all prior steps   │              │
+ * │  │   (autoregressive)    │              │  reused, never     │              │
+ * │  │                       │              │  recomputed        │              │
  * │  └───────────┬───────────┘              └────────────────────┘              │
  * │              │  each new token is appended to the KV cache                  │
  * │              ▼                                                              │

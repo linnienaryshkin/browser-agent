@@ -7,21 +7,6 @@
  * GOAL: Create an Anthropic client, send a single user message, display the reply.
  *
  * ┌─────────────────────────────────────────────────────────────────────────────┐
- * │  How a request reaches Anthropic from the browser                           │
- * │                                                                             │
- * │   Browser          Vite dev server        Anthropic API                     │
- * │     │                    │                      │                           │
- * │     │── SDK call ───────▶│                      │                           │
- * │     │                    │── proxied request ──▶│                           │
- * │     │                    │◀─ response ──────────│                           │
- * │     │◀─ response ────────│                      │                           │
- * │                                                                             │
- * │  Browsers cannot call api.anthropic.com directly because of CORS.           │
- * │  The Vite dev server acts as a transparent proxy, forwarding every          │
- * │  request under /api/anthropic to the real endpoint.                         │
- * └─────────────────────────────────────────────────────────────────────────────┘
- *
- * ┌─────────────────────────────────────────────────────────────────────────────┐
  * │  What a request carries                                                     │
  * │                                                                             │
  * │  Every call to messages.create must include at minimum:                     │
@@ -42,7 +27,7 @@
  * │  role          — always "assistant"                                         │
  * │  model         — the model that generated the response                      │
  * │  content       — array of typed blocks.                                     │
- * │  stop_reason   — why generation ended: (needs later for the agent loop)     │
+ * │  stop_reason   — why generation ended: (needed later for the agent loop)    │
  * │                    end_turn       natural stopping point                    │
  * │                    tool_use       model invoked one or more tools           │
  * │                    max_tokens     token budget exhausted                    │
@@ -55,7 +40,22 @@
  * │                                                                             │
  * │   text        — plain text the model wrote; the common case                 │
  * │                                                                             │
- * │  A single assistant message can mix different block types.                  |
+ * │  A single assistant message can mix different block types.                  │
+ * └─────────────────────────────────────────────────────────────────────────────┘
+ *
+ * ┌─────────────────────────────────────────────────────────────────────────────┐
+ * │  How a request reaches Anthropic from the browser                           │
+ * │                                                                             │
+ * │   Browser          Vite dev server        Anthropic API                     │
+ * │     │                    │                      │                           │
+ * │     │── SDK call ───────▶│                      │                           │
+ * │     │                    │── proxied request ──▶│                           │
+ * │     │                    │◀─ response ──────────│                           │
+ * │     │◀─ response ────────│                      │                           │
+ * │                                                                             │
+ * │  Browsers cannot call api.anthropic.com directly because of CORS.           │
+ * │  The Vite dev server acts as a transparent proxy, forwarding every          │
+ * │  request under /api/anthropic to the real endpoint.                         │
  * └─────────────────────────────────────────────────────────────────────────────┘
  */
 
