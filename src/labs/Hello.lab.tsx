@@ -7,55 +7,56 @@
  * GOAL: Create an Anthropic client, send a single user message, display the reply.
  *
  * ┌─────────────────────────────────────────────────────────────────────────────┐
- * │  What a request carries                                                     │
+ * │  Components                                                                 │
  * │                                                                             │
- * │  Every call to messages.create must include at minimum:                     │
+ * │   ┌─────────────────┐        ┌─────────────────┐        ┌───────────────┐   │
+ * │   │  Browser        │        │  Anthropic API  │        │  LLM          │   │
+ * │   │  (your app)     │◀──────▶│  gateway        │◀──────▶│  model        │   │
+ * │   └─────────────────┘        └─────────────────┘        └───────────────┘   │
  * │                                                                             │
- * │  model      — which model to run; controls capability, speed, and cost      │
- * │  max_tokens — hard ceiling on how many tokens the model may generate        │
- * │  messages   — the full conversation so far as an ordered list of turns      │
- * │                                                                             │
- * │  A "turn" is a single message with a role (user or assistant) and content.  │
- * │  In this lab you send exactly one user turn and read one assistant turn     │
- * │  back. No history is kept between sends — that comes in the next lab.       │
+ * │  Browser       — builds the request, renders the reply                      │
+ * │  Anthropic API — authenticates, routes, enforces rate limits                │
+ * │  LLM           — reads the conversation, generates tokens                   │
  * └─────────────────────────────────────────────────────────────────────────────┘
  *
  * ┌─────────────────────────────────────────────────────────────────────────────┐
- * │  What a response carries — the Message object                               │
+ * │  Sequence                                                                   │
  * │                                                                             │
- * │  id            — unique identifier for this message                         │
- * │  role          — always "assistant"                                         │
- * │  model         — the model that generated the response                      │
- * │  content       — array of typed blocks.                                     │
- * │  stop_reason   — why generation ended: (needed later for the agent loop)    │
- * │                    end_turn       natural stopping point                    │
- * │                    tool_use       model invoked one or more tools           │
- * │                    max_tokens     token budget exhausted                    │
- * │                    stop_sequence  a custom stop sequence was matched        │
- * │  usage         — input / output token counts; drives billing and rate limits│
+ * │   Browser                 Anthropic API              LLM                    │
+ * │     │                          │                      │                     │
+ * │     │─── POST /messages ──────▶│                      │                     │
+ * │     │    {model, max_tokens,   │                      │                     │
+ * │     │     messages}            │── run inference ────▶│                     │
+ * │     │                          │                      │── generate tokens   │
+ * │     │                          │◀─ generated text ────│                     │
+ * │     │◀─── Message object ──────│                      │                     │
+ * │     │     {content,            │                      │                     │
+ * │     │      stop_reason,        │                      │                     │
+ * │     │      usage}              │                      │                     │
  * └─────────────────────────────────────────────────────────────────────────────┘
  *
  * ┌─────────────────────────────────────────────────────────────────────────────┐
- * │  Content block types                                                        │
+ * │  Request  { model, max_tokens, messages }                                   │
  * │                                                                             │
- * │   text        — plain text the model wrote; the common case                 │
+ * │  model      — which LLM to run; controls capability, speed, and cost        │
+ * │  max_tokens — hard ceiling on tokens the model may generate                 │
+ * │  messages   — the full conversation as an ordered list of turns             │
+ * │               each turn: { role: "user" | "assistant", content: string }    │
  * │                                                                             │
- * │  A single assistant message can mix different block types.                  │
+ * │  In this lab you send exactly one user turn. No history is kept between     │
+ * │  sends — that comes in the next lab.                                        │
  * └─────────────────────────────────────────────────────────────────────────────┘
  *
  * ┌─────────────────────────────────────────────────────────────────────────────┐
- * │  How a request reaches Anthropic from the browser                           │
+ * │  Response  { content, stop_reason, usage, … }                               │
  * │                                                                             │
- * │   Browser          Vite dev server        Anthropic API                     │
- * │     │                    │                      │                           │
- * │     │── SDK call ───────▶│                      │                           │
- * │     │                    │── proxied request ──▶│                           │
- * │     │                    │◀─ response ──────────│                           │
- * │     │◀─ response ────────│                      │                           │
- * │                                                                             │
- * │  Browsers cannot call api.anthropic.com directly because of CORS.           │
- * │  The Vite dev server acts as a transparent proxy, forwarding every          │
- * │  request under /api/anthropic to the real endpoint.                         │
+ * │  content     — array of typed blocks; text blocks hold the model's words    │
+ * │  stop_reason — why generation ended:                                        │
+ * │                  end_turn       model decided it was done                   │
+ * │                  tool_use       model wants to call a tool (later labs)     │
+ * │                  max_tokens     token budget exhausted                      │
+ * │                  stop_sequence  a custom stop string was matched            │
+ * │  usage       — input / output token counts; drives billing and rate limits  │
  * └─────────────────────────────────────────────────────────────────────────────┘
  */
 

@@ -28,7 +28,7 @@
  * │  Types of memory                                                            │
  * ├─────────────────────────────────────────────────────────────────────────────┤
  * │                                                                             │
- * │  In-context  (this lab)                                                     │
+ * │  In-context                                                                 │
  * │    The message array is passed directly in the request. Always visible to   │
  * │    the model — no retrieval step needed. Limited by the context window;     │
  * │    cost grows linearly as the conversation lengthens.                       │

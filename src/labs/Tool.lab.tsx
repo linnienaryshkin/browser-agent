@@ -6,7 +6,7 @@
  *
  * PROBLEM: The model is a text generator — now we want to give it the ability to interact with our application.
  * Let it know what the current application theme is.
- * Theme is toggleable via the upper-right corner of the app, or via `window.getTheme()` in devtools.
+ * Theme is taggable via the upper-right corner of the app, or via `window.getTheme()` in devtools.
  *
  * GOAL: Define a `get_theme` tool. When the model decides to use it,
  *       execute it and return the result.

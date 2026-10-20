@@ -21,7 +21,7 @@
  * │  │     Tokenization      │  Text → integer token IDs from the model vocab.  │
  * │  │     "Hello world"     │  The model never processes raw characters,       │
  * │  │   → [9906, 1917, …]   │  only the numerical token sequence.              │
- * │  │                       │  Try it: platform.openai.com/tokenizer           │
+ * │  │                       │  Try it: https://platform.openai.com/tokenizer   │
  * │  └───────────┬───────────┘                                                  │
  * │              │                                                              │
  * │              ▼                                                              │
