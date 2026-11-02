@@ -13,20 +13,20 @@
  * ┌─────────────────────────────────────────────────────────────────────────────┐
  * │  Components                                                                 │
  * │                                                                             │
- * │   ┌──────────────────────┐   ┌──────────────────┐   ┌─────────────────┐    │
- * │   │  Browser             │   │  Local MCP       │   │  Anthropic API  │    │
- * │   │  + local tools       │◀─▶│  server /mcp     │   │  + LLM          │    │
- * │   │  + discovered tools  │   └──────────────────┘   └─────────────────┘    │
- * │   └──────────────────────┘          ▲                       ▲              │
- * │             └───────────────────────┴───────────────────────┘              │
+ * │   ┌──────────────────────┐   ┌──────────────────┐   ┌─────────────────┐     │
+ * │   │  Browser             │   │  Local MCP       │   │  Anthropic API  │     │
+ * │   │  + local tools       │◀─▶│  server /mcp     │   │  + LLM          │     │
+ * │   │  + discovered tools  │   └──────────────────┘   └─────────────────┘     │
+ * │   └──────────────────────┘          ▲                       ▲               │
+ * │             └───────────────────────┴───────────────────────┘               │
  * │                                                                             │
  * │  Browser       — same client loop as Meteo lab; only the endpoint changes   │
- * │  Local MCP     — Vite middleware at /mcp; defined in mcp-theme-server.ts     │
+ * │  Local MCP     — Vite middleware at /mcp; defined in mcp-theme-server.ts    │
  * │  Anthropic API — receives one unified tools array; unaware of origin        │
  * └─────────────────────────────────────────────────────────────────────────────┘
  *
  * ┌─────────────────────────────────────────────────────────────────────────────┐
- * │  Server-side anatomy of an MCP server                                      │
+ * │  Server-side anatomy of an MCP server                                       │
  * │                                                                             │
  * │  Every MCP server must handle exactly three JSON-RPC methods:               │
  * │                                                                             │
@@ -36,13 +36,13 @@
  * │                                                                             │
  * │  That's the entire contract. Anything beyond that is optional.              │
  * │                                                                             │
- * │  See mcp-theme-server.ts for a working example of this pattern.              │
+ * │  See mcp-theme-server.ts for a working example of this pattern.             │
  * └─────────────────────────────────────────────────────────────────────────────┘
  *
  * ┌─────────────────────────────────────────────────────────────────────────────┐
  * │  Build your own — canvas template                                           │
  * │                                                                             │
- * │  Open:  src/mcp-canvas-server.ts  ◀── blank template, ready to code        │
+ * │  Open:  src/mcp-canvas-server.ts  ◀── blank template, ready to code         │
  * │                                                                             │
  * │  Steps:                                                                     │
  * │    1. Add your tools to the TOOLS array                                     │
@@ -63,15 +63,6 @@
  * │  When executing a tool_use block:                                           │
  * │    LOCAL_TOOL_NAMES.has(name) → executeLocalTool(name, input)               │
  * │    mcpToolNames.has(name)     → callMcpTool(name, input) via RPC            │
- * └─────────────────────────────────────────────────────────────────────────────┘
- *
- * ┌─────────────────────────────────────────────────────────────────────────────┐
- * │  What this teaches                                                          │
- * │                                                                             │
- * │  • The three methods every MCP server must implement                        │
- * │  • How inputSchema drives the model's understanding of a tool's parameters  │
- * │  • How a Vite middleware becomes a fully functional MCP server               │
- * │  • The symmetry between client discovery and server declaration             │
  * └─────────────────────────────────────────────────────────────────────────────┘
  */
 

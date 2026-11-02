@@ -67,7 +67,7 @@
  * │           params:{ name:"openmeteo_get_forecast", arguments:{...} } }       │
  * │  ← { result:{ content:[{ type:"text", text:"..." }] } }                     │
  * |                                                                             |
- * |    https://modelcontextprotocol.io/specification/2025-03-26/basic/lifecycle |
+ * |  https://modelcontextprotocol.io/specification/2025-03-26/basic/lifecycle   |
  * └─────────────────────────────────────────────────────────────────────────────┘
  *
  * ┌─────────────────────────────────────────────────────────────────────────────┐
@@ -78,25 +78,6 @@
  * │  The remote server uses Streamable HTTP (SSE): each response body is a      │
  * │  stream of "data: <json>" lines. The client scans for the first line        │
  * │  that has result or error to extract the JSON-RPC response.                 │
- * └─────────────────────────────────────────────────────────────────────────────┘
- *
- * ┌─────────────────────────────────────────────────────────────────────────────┐
- * │  MCP tools available                                                        │
- * │                                                                             │
- * │  openmeteo_search_locations(name)                                           │
- * │    → lat, lon, timezone, country, region for a place name                   │
- * │                                                                             │
- * │  openmeteo_get_forecast(latitude, longitude, ...)                           │
- * │    → current conditions, hourly/daily forecast including sunrise/sunset     │
- * └─────────────────────────────────────────────────────────────────────────────┘
- *
- * ┌─────────────────────────────────────────────────────────────────────────────┐
- * │  What this teaches                                                          │
- * │                                                                             │
- * │  • The four-step MCP handshake every client must perform                    │
- * │  • How to convert MCP tool descriptors into Anthropic SDK Tool objects      │
- * │  • SSE transport — parsing "data: {...}" lines from a streaming response    │
- * │  • A Vite proxy entry is the only local config needed for a remote MCP      │
  * └─────────────────────────────────────────────────────────────────────────────┘
  */
 
