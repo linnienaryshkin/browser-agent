@@ -114,7 +114,7 @@ function handleRequest(body: {
   }
 }
 
-export function mcpLampMiddleware(): Connect.NextHandleFunction {
+export function mcpThemeMiddleware(): Connect.NextHandleFunction {
   return (req, res, next) => {
     if (req.url !== '/mcp' || req.method !== 'POST') return next();
 

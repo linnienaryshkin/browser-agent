@@ -1,82 +1,78 @@
 /**
  * ╔══════════════════════════════════════════════════════════════════════════════╗
- * ║  Lab: MCP                                                                    ║
- * ║  Discover and integrate remote tools via Model Context Protocol (MCP)        ║
+ * ║  Lab: CUSTOM MCP                                                             ║
+ * ║  Extends → Meteo lab (same client pattern, now you own the server)           ║
  * ╚══════════════════════════════════════════════════════════════════════════════╝
  *
- * GOAL: Connect to a local MCP server to discover remote tools, add them to
- *       the agent's toolset, and call them alongside local tools.
+ * PROBLEM: The previous lab consumed a ready-made MCP server.
+ *          Now flip to the other side — how do you build and expose your own?
+ *
+ * GOAL: Understand MCP from the server perspective and write your own MCP server
+ *       using the canvas template.
  *
  * ┌─────────────────────────────────────────────────────────────────────────────┐
- * │  MCP overview                                                               │
+ * │  Components                                                                 │
  * │                                                                             │
- * │  MCP (Model Context Protocol) is a standard for AI agents to discover and   │
- * │  use tools from any server, not just the local application.                 │
+ * │   ┌──────────────────────┐   ┌──────────────────┐   ┌─────────────────┐    │
+ * │   │  Browser             │   │  Local MCP       │   │  Anthropic API  │    │
+ * │   │  + local tools       │◀─▶│  server /mcp     │   │  + LLM          │    │
+ * │   │  + discovered tools  │   └──────────────────┘   └─────────────────┘    │
+ * │   └──────────────────────┘          ▲                       ▲              │
+ * │             └───────────────────────┴───────────────────────┘              │
  * │                                                                             │
- * │  ┌─────────────┐       ┌──────────────┐       ┌──────────────┐              │
- * │  │   Browser   │───────│ Vite Proxy   │───────│ MCP Server   │              │
- * │  │  (client)   │       │  (POST /mcp) │       │  (local)     │              │
- * │  └─────────────┘       └──────────────┘       └──────────────┘              │
- * │                                                                             │
- * │  1. Client sends a tools/list RPC call                                      │
- * │  2. Server returns [{ name, description, inputSchema }, ...]                │
- * │  3. Client converts the result to Anthropic SDK tool format                 │
- * │  4. Client merges remote tools with local tools into one array              │
+ * │  Browser       — same client loop as Meteo lab; only the endpoint changes   │
+ * │  Local MCP     — Vite middleware at /mcp; defined in mcp-theme-server.ts     │
+ * │  Anthropic API — receives one unified tools array; unaware of origin        │
  * └─────────────────────────────────────────────────────────────────────────────┘
  *
  * ┌─────────────────────────────────────────────────────────────────────────────┐
- * │  MCP protocol (JSON-RPC 2.0)                                                │
+ * │  Server-side anatomy of an MCP server                                      │
  * │                                                                             │
- * │  Request:                                                                   │
- * │  {                                                                          │
- * │    jsonrpc: "2.0",                                                          │
- * │    id: 1,                                                                   │
- * │    method: "tools/list",           ◀── MCP server exposes tools/list        │
- * │    params: {}                                                               │
- * │  }                                                                          │
+ * │  Every MCP server must handle exactly three JSON-RPC methods:               │
  * │                                                                             │
- * │  Response:                                                                  │
- * │  {                                                                          │
- * │    jsonrpc: "2.0",                                                          │
- * │    id: 1,                                                                   │
- * │    result: {                                                                │
- * │      tools: [                                                               │
- * │        { name: "get_color_scheme", description: "...", inputSchema: {} }    │
- * │      ]                                                                      │
- * │    }                                                                        │
- * │  }                                                                          │
+ * │  initialize          → negotiate protocol version; return serverInfo        │
+ * │  tools/list          → return an array of { name, description, inputSchema }│
+ * │  tools/call          → execute the named tool; return { content:[{text}] }  │
+ * │                                                                             │
+ * │  That's the entire contract. Anything beyond that is optional.              │
+ * │                                                                             │
+ * │  See mcp-theme-server.ts for a working example of this pattern.              │
  * └─────────────────────────────────────────────────────────────────────────────┘
  *
  * ┌─────────────────────────────────────────────────────────────────────────────┐
- * │  Integration pattern                                                        │
+ * │  Build your own — canvas template                                           │
  * │                                                                             │
- * │  const localTools: Anthropic.Tool[] = [get_theme, set_theme];               │
- * │  // get_system_color_scheme comes from MCP, not local tools                 │
- * │  const mcpTools = await discoverMcpTools();                                 │
- * │  const allTools = [...localTools, ...mcpTools];                             │
+ * │  Open:  src/mcp-canvas-server.ts  ◀── blank template, ready to code        │
+ * │                                                                             │
+ * │  Steps:                                                                     │
+ * │    1. Add your tools to the TOOLS array                                     │
+ * │       { name, description, inputSchema }                                    │
+ * │    2. Handle each tool in callTool() — return a string result               │
+ * │    3. Point this lab at /mcp-canvas instead of /mcp                         │
+ * │                                                                             │
+ * │  The server runs as a Vite middleware at POST /mcp-canvas.                  │
+ * │  The JSON-RPC router in the template handles everything else automatically. │
+ * └─────────────────────────────────────────────────────────────────────────────┘
+ *
+ * ┌─────────────────────────────────────────────────────────────────────────────┐
+ * │  Tool routing (client side, already implemented here)                       │
+ * │                                                                             │
+ * │  const mcpTools   = await discoverMcpTools();          // from server       │
+ * │  const allTools   = [...LOCAL_TOOLS, ...mcpTools];     // unified list      │
  * │                                                                             │
  * │  When executing a tool_use block:                                           │
- * │    If the name is in LOCAL_TOOL_NAMES → executeLocalTool(...)               │
- * │    Otherwise → callMcpTool(...) via RPC                                     │
- * │                                                                             │
- * │  The model sees no distinction between local and remote tools — it reads    │
- * │  their schemas and decides when to call each one.                           │
+ * │    LOCAL_TOOL_NAMES.has(name) → executeLocalTool(name, input)               │
+ * │    mcpToolNames.has(name)     → callMcpTool(name, input) via RPC            │
  * └─────────────────────────────────────────────────────────────────────────────┘
  *
  * ┌─────────────────────────────────────────────────────────────────────────────┐
  * │  What this teaches                                                          │
  * │                                                                             │
- * │  Tool discovery: agents dynamically learn what tools are available at       │
- * │  runtime rather than having them hardcoded. Composition: local and remote   │
- * │  tools are merged into one array and used interchangeably. Routing: the     │
- * │  client decides where each tool executes based on its origin. In the real   │
- * │  world, MCP servers can front browser automation, databases, file systems,  │
- * │  or any API — the model plans what to call, you orchestrate the execution.  │
+ * │  • The three methods every MCP server must implement                        │
+ * │  • How inputSchema drives the model's understanding of a tool's parameters  │
+ * │  • How a Vite middleware becomes a fully functional MCP server               │
+ * │  • The symmetry between client discovery and server declaration             │
  * └─────────────────────────────────────────────────────────────────────────────┘
- *
- * TEST: Say "Does my app theme match my system color scheme?" — model calls
- *       get_system_color_scheme via MCP and get_theme locally, then compares them.
- *       Say "Match the app theme to my system" — it also calls set_theme if needed.
  */
 
 import { useState, useEffect } from 'react';

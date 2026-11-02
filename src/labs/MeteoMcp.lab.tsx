@@ -1,24 +1,87 @@
 /**
  * ╔══════════════════════════════════════════════════════════════════════════════╗
- * ║  Lab: METEO                                                                 ║
- * ║  Is it light outside right now? Ask the agent — it will figure it out.     ║
+ * ║  Lab: METEO MCP                                                             ║
+ * ║  Extends → Loop lab (same agent loop, MCP tool discovery added on top)      ║
  * ╚══════════════════════════════════════════════════════════════════════════════╝
  *
- * GOAL: Connect to a real remote MCP server over HTTP, proxied through Vite,
- *       to get weather and daylight data — no local server code, no API keys.
+ * PROBLEM: So far all tools have been hardcoded directly in the browser.
+ *          What if you want to give the agent access to tools from an external
+ *          service — without reimplementing every integration yourself?
+ *
+ * GOAL: Learn the MCP client protocol. Connect to a real remote MCP server
+ *       (open-meteo weather data) and discover its tools at runtime.
  *
  * ┌─────────────────────────────────────────────────────────────────────────────┐
- * │  Architecture                                                               │
+ * │  What is MCP?                                                               │
  * │                                                                             │
- * │  Browser → POST /api/open-meteo → Vite proxy → open-meteo.caseyjhand.com   │
+ * │  MCP (Model Context Protocol) is an open standard that lets AI clients      │
+ * │  discover and invoke tools from any compatible server over JSON-RPC 2.0.    │
+ * │  The client doesn't need to know what tools exist in advance — it asks the  │
+ * │  server at runtime.                                                         │
  * │                                                                             │
- * │  The remote MCP server uses SSE transport (Streamable HTTP):                │
- * │  responses are Server-Sent Events with "data: {...}" lines.                 │
- * │  No API key required — it wraps the open-meteo.com free API.               │
+ * │  Think of it as a universal plugin interface for AI agents:                 │
+ * │    • servers expose tools (and optionally resources, prompts)               │
+ * │    • clients discover and call those tools via a standard protocol          │
+ * │    • the LLM sees one unified tool list regardless of where tools live      │
  * └─────────────────────────────────────────────────────────────────────────────┘
  *
  * ┌─────────────────────────────────────────────────────────────────────────────┐
- * │  MCP tools available (subset used here)                                     │
+ * │  Components                                                                 │
+ * │                                                                             │
+ * │   ┌─────────────────┐   ┌──────────────────┐   ┌─────────────────────┐      │
+ * │   │  Browser        │   │  Remote MCP      │   │  Anthropic API      │      │
+ * │   │  (client)       │◀─▶│  open-meteo      │   │  + LLM              │      │
+ * │   └─────────────────┘   └──────────────────┘   └─────────────────────┘      │
+ * │          │                                               ▲                  │
+ * │          └───────────────────────────────────────────────┘                  │
+ * │                                                                             │
+ * │  Browser       — runs the handshake, merges tool lists, routes tool calls   │
+ * │  Remote MCP    — public weather server; no API key required                 │
+ * │  Anthropic API — receives one unified tools array; unaware of origin        │
+ * └─────────────────────────────────────────────────────────────────────────────┘
+ *
+ * ┌─────────────────────────────────────────────────────────────────────────────┐
+ * │  MCP session lifecycle (JSON-RPC 2.0)                                       │
+ * │                                                                             │
+ * │  Why not just call tools/list directly?                                     │
+ * │  The MCP spec requires a handshake before any other method. initialize      │
+ * │  lets client and server agree on a protocol version and exchange            │
+ * │  capability flags; a compliant server may reject tools/list if it arrives   │
+ * │  before the session is established.                                         │
+ * │                                                                             │
+ * │  Step 1 — initialize (negotiate version & capabilities)                     │
+ * │  → POST { jsonrpc:"2.0", id:1, method:"initialize",                         │
+ * │           params:{ protocolVersion, capabilities, clientInfo } }            │
+ * │  ← { result:{ protocolVersion, capabilities, serverInfo } }                 │
+ * │                                                                             │
+ * │  Step 2 — notifications/initialized (client signals it's ready)             │
+ * │  → POST { jsonrpc:"2.0", id:2, method:"notifications/initialized" }         │
+ * │  ← 204 No Content  (one-way notification, no response expected)             │
+ * │                                                                             │
+ * │  Step 3 — tools/list (discover available tools)                             │
+ * │  → POST { jsonrpc:"2.0", id:3, method:"tools/list", params:{} }             │
+ * │  ← { result:{ tools:[{ name, description, inputSchema }, ...] } }           │
+ * │                                                                             │
+ * │  Step 4 — tools/call (invoke a tool by name)                                │
+ * │  → POST { jsonrpc:"2.0", id:4, method:"tools/call",                         │
+ * │           params:{ name:"openmeteo_get_forecast", arguments:{...} } }       │
+ * │  ← { result:{ content:[{ type:"text", text:"..." }] } }                     │
+ * |                                                                             |
+ * |    https://modelcontextprotocol.io/specification/2025-03-26/basic/lifecycle |
+ * └─────────────────────────────────────────────────────────────────────────────┘
+ *
+ * ┌─────────────────────────────────────────────────────────────────────────────┐
+ * │  SSE transport (used by this remote server)                                 │
+ * │                                                                             │
+ * │  Browser → POST /api/open-meteo → Vite proxy → open-meteo.caseyjhand.com   │
+ * │                                                                             │
+ * │  The remote server uses Streamable HTTP (SSE): each response body is a      │
+ * │  stream of "data: <json>" lines. The client scans for the first line        │
+ * │  that has result or error to extract the JSON-RPC response.                 │
+ * └─────────────────────────────────────────────────────────────────────────────┘
+ *
+ * ┌─────────────────────────────────────────────────────────────────────────────┐
+ * │  MCP tools available                                                        │
  * │                                                                             │
  * │  openmeteo_search_locations(name)                                           │
  * │    → lat, lon, timezone, country, region for a place name                   │
@@ -28,29 +91,13 @@
  * └─────────────────────────────────────────────────────────────────────────────┘
  *
  * ┌─────────────────────────────────────────────────────────────────────────────┐
- * │  Agent flow                                                                 │
- * │                                                                             │
- * │  User: "Is it light outside?"                                               │
- * │    1. Agent calls openmeteo_search_locations — or asks the user             │
- * │    2. Agent calls openmeteo_get_forecast with is_day + sunrise/sunset       │
- * │    3. Agent replies: "It's currently daytime in Berlin (sunrise 06:14…)"   │
- * └─────────────────────────────────────────────────────────────────────────────┘
- *
- * ┌─────────────────────────────────────────────────────────────────────────────┐
  * │  What this teaches                                                          │
  * │                                                                             │
- * │  Real remote MCP: the server runs externally — a single proxy entry in      │
- * │  vite.config is all the local setup required.                               │
- * │                                                                             │
- * │  SSE transport: the server streams responses as "data: {...}" event lines;  │
- * │  the client must parse each line to extract the JSON-RPC result.            │
- * │                                                                             │
- * │  Free public APIs: open-meteo requires no account or API key, making it     │
- * │  easy to experiment with real-world data in a learning environment.         │
+ * │  • The four-step MCP handshake every client must perform                    │
+ * │  • How to convert MCP tool descriptors into Anthropic SDK Tool objects      │
+ * │  • SSE transport — parsing "data: {...}" lines from a streaming response    │
+ * │  • A Vite proxy entry is the only local config needed for a remote MCP      │
  * └─────────────────────────────────────────────────────────────────────────────┘
- *
- * TEST: Say "Is it light outside right now?" then give your city when asked,
- *       or say "Is it light in Tokyo right now?"
  */
 
 import { useState, useEffect } from 'react';
@@ -72,8 +119,6 @@ const client = new Anthropic({
 
 const MCP_ENDPOINT = '/api/open-meteo.caseyjhand';
 
-// The remote server uses SSE transport: responses contain multiple "data: <json>" lines.
-// Notifications come first; the actual result/error is the first line that has result or error.
 async function mcpCall(method: string, params?: Record<string, unknown>) {
   const res = await fetch(MCP_ENDPOINT, {
     method: 'POST',
@@ -82,26 +127,11 @@ async function mcpCall(method: string, params?: Record<string, unknown>) {
   });
   if (res.status === 204) return null;
 
+  // SSE responses are newline-separated "data: <json>" lines; pick the first with result/error.
   const text = await res.text();
-  let lastData: unknown = null;
-  for (const line of text.split('\n')) {
-    const trimmed = line.trim();
-    if (trimmed.startsWith('data:')) {
-      try {
-        const parsed = JSON.parse(trimmed.slice(5).trim());
-        if (parsed.result !== undefined || parsed.error !== undefined) return parsed;
-        lastData = parsed;
-      } catch {
-        /* skip malformed lines */
-      }
-    }
-  }
-  if (lastData) return lastData;
-  try {
-    return JSON.parse(text);
-  } catch {
-    return null;
-  }
+  const dataLines = text.split('\n').filter(l => l.trimStart().startsWith('data:'));
+  const parsed = dataLines.map(l => { try { return JSON.parse(l.replace(/^\s*data:\s*/, '')); } catch { return null; } });
+  return parsed.find(p => p?.result !== undefined || p?.error !== undefined) ?? parsed.at(-1) ?? null;
 }
 
 const LOCAL_TOOLS: Anthropic.Tool[] = [

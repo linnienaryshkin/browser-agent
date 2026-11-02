@@ -22,11 +22,11 @@ import { Chat as ChatMemory } from './labs/Memory.lab';
 import { Chat as ChatTool } from './labs/Tool.lab';
 import { Chat as ChatInput } from './labs/Input.lab';
 import { Chat as ChatLoop } from './labs/Loop.lab';
-import { Chat as ChatMcp } from './labs/Mcp.lab';
-import { Chat as ChatMeteo } from './labs/Meteo.lab';
+import { Chat as ChatCustomMcp } from './labs/CustomMcp.lab';
+import { Chat as ChatMeteo } from './labs/MeteoMcp.lab';
 import { Chat as ChatStreaming } from './labs/Streaming.lab';
 import { Chat as ChatCanvas } from './labs/Canvas';
-import { Chat as ChatA2A } from './labs/A2A.lab';
+
 import type { ModelId } from './types';
 
 const TABS = [
@@ -37,9 +37,8 @@ const TABS = [
   { label: 'Input', path: '/input' },
   { label: 'Loop', path: '/loop' },
   { label: 'Streaming*', path: '/streaming' },
-  { label: 'MCP*', path: '/mcp-lab' },
-  { label: 'Meteo*', path: '/meteo' },
-  { label: 'A2A*', path: '/a2a' },
+  { label: 'Meteo MCP*', path: '/meteo' },
+  { label: 'Custom MCP*', path: '/mcp-lab' },
 ];
 
 const MODELS: { id: ModelId; label: string }[] = [
@@ -151,9 +150,9 @@ function Layout({ mode, onSetTheme, model, onSetModel }: LayoutProps) {
           <Route path="/input" element={<ChatInput />} />
           <Route path="/loop" element={<ChatLoop />} />
           <Route path="/streaming" element={<ChatStreaming />} />
-          <Route path="/mcp-lab" element={<ChatMcp />} />
+          <Route path="/mcp-lab" element={<ChatCustomMcp />} />
           <Route path="/meteo" element={<ChatMeteo />} />
-          <Route path="/a2a" element={<ChatA2A />} />
+
         </Routes>
       </Box>
     </Box>

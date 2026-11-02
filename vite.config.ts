@@ -1,14 +1,23 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-import { mcpLampMiddleware } from './src/mcp-lamp-server'
+import { mcpThemeMiddleware } from './src/mcp-theme-server'
+import { mcpCanvasMiddleware } from './src/mcp-canvas-server'
 
 export default defineConfig({
   plugins: [
     react(),
     {
-      name: 'mcp-lamp-server',
+      name: 'mcp-theme-server',
       configureServer(server) {
-        server.middlewares.use(mcpLampMiddleware());
+        server.middlewares.use(mcpThemeMiddleware());
+      },
+    },
+    {
+      // Canvas MCP server — implement your own tools in src/mcp-canvas-server.ts
+      // Reachable at POST /mcp-canvas from any lab
+      name: 'mcp-canvas-server',
+      configureServer(server) {
+        server.middlewares.use(mcpCanvasMiddleware());
       },
     },
   ],

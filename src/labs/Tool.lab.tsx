@@ -12,6 +12,26 @@
  *       execute it and return the result.
  *
  * ┌─────────────────────────────────────────────────────────────────────────────┐
+ * │  Components                                                                 │
+ * │                                                                             │
+ * │   ┌─────────────────┐        ┌─────────────────┐        ┌───────────────┐   │
+ * │   │  Browser        │        │  Anthropic API  │        │  LLM          │   │
+ * │   │                 │◀──────▶│  gateway        │◀──────▶│  model        │   │
+ * │   └─────────────────┘        └─────────────────┘        └───────────────┘   │
+ * │          │                                                                  │
+ * │          │  executes                                                        │
+ * │          ▼                                                                  │
+ * │   ┌─────────────────┐                                                       │
+ * │   │  Local Tool     │                                                       │
+ * │   │  get_theme      │  { name, description, input_schema }                  │
+ * │   └─────────────────┘                                                       │
+ * │                                                                             │
+ * │  Browser       — executes the tool locally, passes the result back          │
+ * │  Anthropic API — routes the request; sees the tool definition               │
+ * │  LLM           — decides when to call the tool; reads the result            │
+ * └─────────────────────────────────────────────────────────────────────────────┘
+ *
+ * ┌─────────────────────────────────────────────────────────────────────────────┐
  * │  stop_reason — how the model signals what happens next                      │
  * │                                                                             │
  * │  Every response carries a stop_reason that tells you what to do.            │

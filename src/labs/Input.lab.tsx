@@ -12,6 +12,27 @@
  *       The model must pass a validated argument to call it.
  *
  * ┌─────────────────────────────────────────────────────────────────────────────┐
+ * │  Components                                                                 │
+ * │                                                                             │
+ * │   ┌─────────────────┐        ┌─────────────────┐        ┌───────────────┐   │
+ * │   │  Browser        │        │  Anthropic API  │        │  LLM          │   │
+ * │   │                 │◀──────▶│  gateway        │◀──────▶│  model        │   │
+ * │   └─────────────────┘        └─────────────────┘        └───────────────┘   │
+ * │          │                                                                  │
+ * │          │  executes                                                        │
+ * │          ▼                                                                  │
+ * │   ┌─────────────────┐                                                       │
+ * │   │  Local Tool     │                                                       │
+ * │   │  set_theme      │                                                       │
+ * │   │  { theme: enum }│  ← structured input validated against JSON Schema     │
+ * │   └─────────────────┘                                                       │
+ * │                                                                             │
+ * │  Browser       — executes tools locally; validates input schema             │
+ * │  Anthropic API — enforces input_schema; guides generation to valid args     │
+ * │  LLM           — chooses the tool and fills in structured arguments         │
+ * └─────────────────────────────────────────────────────────────────────────────┘
+ *
+ * ┌─────────────────────────────────────────────────────────────────────────────┐
  * │  JSON Schema — the contract between you and the model                       │
  * │                                                                             │
  * │  https://json-schema.org/                                                   │

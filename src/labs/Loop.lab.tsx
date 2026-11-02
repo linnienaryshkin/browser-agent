@@ -12,6 +12,22 @@
  *       for user input. The agent loop continues until stop_reason is "end_turn".
  *
  * ┌─────────────────────────────────────────────────────────────────────────────┐
+ * │  Components                                                                 │
+ * │                                                                             │
+ * │   ┌─────────────────┐        ┌─────────────────┐        ┌───────────────┐   │
+ * │   │  Browser        │        │  Anthropic API  │        │  LLM          │   │
+ * │   │  + local tools  │◀──────▶│  gateway        │───────▶│  model        │   │
+ * │   └─────────────────┘        └─────────────────┘        └───────────────┘   │
+ * │          ▲                                                                  │
+ * │          └── agent loop runs here until stop_reason === "end_turn"          │
+ * │              multiple tool calls, multiple API round trips, one user intent │
+ * │                                                                             │
+ * │  Browser       — drives the loop; executes tools; appends results to history│
+ * │  Anthropic API — processes each turn independently                          │
+ * │  LLM           — plans across turns; chains tool calls to reach a goal      │
+ * └─────────────────────────────────────────────────────────────────────────────┘
+ *
+ * ┌─────────────────────────────────────────────────────────────────────────────┐
  * │  Content blocks — mixed messages                                            │
  * │                                                                             │
  * │  A single assistant message can contain multiple blocks of different types  │

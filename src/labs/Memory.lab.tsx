@@ -10,6 +10,28 @@
  * GOAL: Make it remember the context
  *
  * ┌─────────────────────────────────────────────────────────────────────────────┐
+ * │  Components                                                                 │
+ * │                                                                             │
+ * │   ┌─────────────────┐        ┌─────────────────┐        ┌───────────────┐   │
+ * │   │  Browser        │        │  Anthropic API  │        │  LLM          │   │
+ * │   │                 │◀──────▶│  gateway        │◀──────▶│  model        │   │
+ * │   └─────────────────┘        └─────────────────┘        └───────────────┘   │
+ * │          │                                                                  │
+ * │          │  owns & replays                                                  │
+ * │          ▼                                                                  │
+ * │   ┌─────────────────────────────┐                                           │
+ * │   │  MessageParam[]             │                                           │
+ * │   │  { role, content }          │                                           │
+ * │   │  { role, content }          │  ← grows by 2 each round trip             │
+ * │   │  { role, content }          │                                           │
+ * │   └─────────────────────────────┘                                           │
+ * │                                                                             │
+ * │  Browser       — owns the message array; replays full history each call     │
+ * │  Anthropic API — stateless gateway; processes each request in isolation     │
+ * │  LLM           — reads the full history, generates the next turn            │
+ * └─────────────────────────────────────────────────────────────────────────────┘
+ *
+ * ┌─────────────────────────────────────────────────────────────────────────────┐
  * │  A stateless API                                                            │
  * │                                                                             │
  * │  The server holds no session. Every request is processed in isolation and   │
