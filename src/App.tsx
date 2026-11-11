@@ -26,6 +26,7 @@ import { Chat as ChatCustomMcp } from './labs/CustomMcp.lab';
 import { Chat as ChatMeteo } from './labs/MeteoMcp.lab';
 import { Chat as ChatStreaming } from './labs/Streaming.lab';
 import { Chat as ChatAgUi } from './labs/AgUi.lab';
+import { Chat as ChatA2Ui } from './labs/A2ui.lab';
 import { Chat as ChatCanvas } from './labs/Canvas';
 
 import type { ModelId } from './types';
@@ -41,6 +42,7 @@ const TABS = [
   { label: 'Meteo MCP*', path: '/meteo' },
   { label: 'Custom MCP*', path: '/mcp-lab' },
   { label: 'AG-UI*', path: '/ag-ui' },
+  { label: 'A2UI*', path: '/a2ui' },
 ];
 
 const MODELS: { id: ModelId; label: string }[] = [
@@ -155,6 +157,7 @@ function Layout({ mode, onSetTheme, model, onSetModel }: LayoutProps) {
           <Route path="/mcp-lab" element={<ChatCustomMcp />} />
           <Route path="/meteo" element={<ChatMeteo />} />
           <Route path="/ag-ui" element={<ChatAgUi />} />
+          <Route path="/a2ui" element={<ChatA2Ui />} />
         </Routes>
       </Box>
     </Box>

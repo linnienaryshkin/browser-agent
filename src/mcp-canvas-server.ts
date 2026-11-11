@@ -73,7 +73,8 @@ function handleRequest(body: {
 
     case 'tools/call': {
       const toolName = (params as { name: string; arguments?: Record<string, unknown> })?.name;
-      const toolArgs = (params as { name: string; arguments?: Record<string, unknown> })?.arguments ?? {};
+      const toolArgs =
+        (params as { name: string; arguments?: Record<string, unknown> })?.arguments ?? {};
       try {
         return {
           jsonrpc: '2.0',
@@ -103,17 +104,29 @@ export function mcpCanvasMiddleware(): Connect.NextHandleFunction {
     if (req.url !== '/mcp-canvas' || req.method !== 'POST') return next();
 
     let body = '';
-    req.on('data', (chunk: Buffer) => { body += chunk.toString(); });
+    req.on('data', (chunk: Buffer) => {
+      body += chunk.toString();
+    });
     req.on('end', () => {
       try {
         const parsed = JSON.parse(body);
         const response = handleRequest(parsed);
-        if (!response) { res.writeHead(204); res.end(); return; }
+        if (!response) {
+          res.writeHead(204);
+          res.end();
+          return;
+        }
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify(response));
       } catch {
         res.writeHead(400, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ jsonrpc: '2.0', id: null, error: { code: -32700, message: 'Parse error' } }));
+        res.end(
+          JSON.stringify({
+            jsonrpc: '2.0',
+            id: null,
+            error: { code: -32700, message: 'Parse error' },
+          }),
+        );
       }
     });
   };

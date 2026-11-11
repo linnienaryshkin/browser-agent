@@ -12,7 +12,14 @@ import type { Connect } from 'vite';
 import Anthropic from '@anthropic-ai/sdk';
 import { EventEncoder } from '@ag-ui/encoder';
 import { EventType } from '@ag-ui/core';
-import type { RunAgentInput, Message, TextPart, Tool, AssistantMessage, ToolMessage } from '@ag-ui/core';
+import type {
+  RunAgentInput,
+  Message,
+  TextPart,
+  Tool,
+  AssistantMessage,
+  ToolMessage,
+} from '@ag-ui/core';
 
 let anthropic: Anthropic;
 
@@ -36,7 +43,6 @@ function agUiMessagesToAnthropic(messages: Message[]): Anthropic.MessageParam[] 
     if (msg.role === 'user') {
       const text = contentToText(msg.content);
       if (text) out.push({ role: 'user', content: text });
-
     } else if (msg.role === 'assistant') {
       const m = msg as AssistantMessage;
       const content: (Anthropic.TextBlockParam | Anthropic.ToolUseBlockParam)[] = [];
@@ -50,7 +56,6 @@ function agUiMessagesToAnthropic(messages: Message[]): Anthropic.MessageParam[] 
         });
       }
       if (content.length > 0) out.push({ role: 'assistant', content });
-
     } else if (msg.role === 'tool') {
       const m = msg as ToolMessage;
       const text = typeof m.content === 'string' ? m.content : contentToText(m.content);
@@ -78,7 +83,11 @@ function agUiToolsToAnthropic(tools: Tool[]): Anthropic.Tool[] {
   return tools.map((t) => ({
     name: t.name,
     description: t.description,
-    input_schema: (t.parameters ?? { type: 'object', properties: {}, required: [] }) as Anthropic.Tool['input_schema'],
+    input_schema: (t.parameters ?? {
+      type: 'object',
+      properties: {},
+      required: [],
+    }) as Anthropic.Tool['input_schema'],
   }));
 }
 
@@ -103,7 +112,9 @@ export function aguiMiddleware(): Connect.NextHandleFunction {
     }
 
     const tools = input.tools ?? [];
-    log(`  threadId=${input.threadId}  runId=${input.runId}  messages=${input.messages?.length ?? 0}  tools=${tools.map((t) => t.name).join(', ') || 'none'}`);
+    log(
+      `  threadId=${input.threadId}  runId=${input.runId}  messages=${input.messages?.length ?? 0}  tools=${tools.map((t) => t.name).join(', ') || 'none'}`,
+    );
 
     const encoder = new EventEncoder({ accept: req.headers['accept'] });
     res.writeHead(200, {
@@ -156,21 +167,51 @@ export function aguiMiddleware(): Connect.NextHandleFunction {
       for await (const event of stream) {
         if (event.type === 'content_block_start') {
           if (event.content_block.type === 'text') {
-            send({ type: EventType.TEXT_MESSAGE_START, runId, threadId, messageId, role: 'assistant' });
+            send({
+              type: EventType.TEXT_MESSAGE_START,
+              runId,
+              threadId,
+              messageId,
+              role: 'assistant',
+            });
             textStarted = true;
           } else if (event.content_block.type === 'tool_use') {
             const toolCallId = crypto.randomUUID();
-            toolBlocks.set(event.index, { toolCallId, name: event.content_block.name, inputJson: '' });
-            send({ type: EventType.TOOL_CALL_START, runId, threadId, messageId, toolCallId, toolCallName: event.content_block.name });
+            toolBlocks.set(event.index, {
+              toolCallId,
+              name: event.content_block.name,
+              inputJson: '',
+            });
+            send({
+              type: EventType.TOOL_CALL_START,
+              runId,
+              threadId,
+              messageId,
+              toolCallId,
+              toolCallName: event.content_block.name,
+            });
           }
         } else if (event.type === 'content_block_delta') {
           if (event.delta.type === 'text_delta') {
-            send({ type: EventType.TEXT_MESSAGE_CONTENT, runId, threadId, messageId, delta: event.delta.text });
+            send({
+              type: EventType.TEXT_MESSAGE_CONTENT,
+              runId,
+              threadId,
+              messageId,
+              delta: event.delta.text,
+            });
           } else if (event.delta.type === 'input_json_delta') {
             const block = toolBlocks.get(event.index);
             if (block) {
               block.inputJson += event.delta.partial_json;
-              send({ type: EventType.TOOL_CALL_ARGS, runId, threadId, messageId, toolCallId: block.toolCallId, delta: event.delta.partial_json });
+              send({
+                type: EventType.TOOL_CALL_ARGS,
+                runId,
+                threadId,
+                messageId,
+                toolCallId: block.toolCallId,
+                delta: event.delta.partial_json,
+              });
             }
           }
         } else if (event.type === 'content_block_stop') {
@@ -178,17 +219,27 @@ export function aguiMiddleware(): Connect.NextHandleFunction {
             send({ type: EventType.TEXT_MESSAGE_END, runId, threadId, messageId });
             textStarted = false;
           } else {
-            const block = toolBlocks.get((event as { type: 'content_block_stop'; index: number }).index);
+            const block = toolBlocks.get(
+              (event as { type: 'content_block_stop'; index: number }).index,
+            );
             if (block) {
               log(`    tool_call_end: ${block.name}(${block.inputJson})`);
-              send({ type: EventType.TOOL_CALL_END, runId, threadId, messageId, toolCallId: block.toolCallId });
+              send({
+                type: EventType.TOOL_CALL_END,
+                runId,
+                threadId,
+                messageId,
+                toolCallId: block.toolCallId,
+              });
             }
           }
         }
       }
 
       const finalMsg = await stream.finalMessage();
-      log(`  stop_reason=${finalMsg.stop_reason}  input_tokens=${finalMsg.usage.input_tokens}  output_tokens=${finalMsg.usage.output_tokens}`);
+      log(
+        `  stop_reason=${finalMsg.stop_reason}  input_tokens=${finalMsg.usage.input_tokens}  output_tokens=${finalMsg.usage.output_tokens}`,
+      );
 
       send({ type: EventType.STEP_FINISHED, runId, threadId, stepName: messageId });
       send({ type: EventType.RUN_FINISHED, runId, threadId, outcome: { type: 'success' } });

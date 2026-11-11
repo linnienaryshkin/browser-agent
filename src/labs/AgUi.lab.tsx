@@ -174,7 +174,10 @@ export function Chat() {
     type OnEventParams = { event: BaseEvent } & AgentSubscriberParams;
 
     // toolCallId → { name, argsJson (input), result, entryId }
-    const pendingToolCalls = new Map<string, { name: string; argsJson: string; result: string; entryId: string }>();
+    const pendingToolCalls = new Map<
+      string,
+      { name: string; argsJson: string; result: string; entryId: string }
+    >();
     let textEntryId = '';
 
     const subscriber: AgentSubscriber = {
@@ -189,7 +192,10 @@ export function Chat() {
 
           case EventType.TEXT_MESSAGE_START: {
             textEntryId = nextId();
-            setTimeline((prev) => [...prev, { id: textEntryId, kind: 'text', role: 'assistant', text: '' }]);
+            setTimeline((prev) => [
+              ...prev,
+              { id: textEntryId, kind: 'text', role: 'assistant', text: '' },
+            ]);
             break;
           }
 
@@ -207,10 +213,21 @@ export function Chat() {
           case EventType.TOOL_CALL_START: {
             const ev = event as ToolCallStartEvent;
             const entryId = nextId();
-            pendingToolCalls.set(ev.toolCallId, { name: ev.toolCallName, argsJson: '', result: '', entryId });
+            pendingToolCalls.set(ev.toolCallId, {
+              name: ev.toolCallName,
+              argsJson: '',
+              result: '',
+              entryId,
+            });
             setTimeline((prev) => [
               ...prev,
-              { id: entryId, kind: 'tool', toolName: ev.toolCallName, toolArgs: '', status: 'running' },
+              {
+                id: entryId,
+                kind: 'tool',
+                toolName: ev.toolCallName,
+                toolArgs: '',
+                status: 'running',
+              },
             ]);
             break;
           }
@@ -245,14 +262,21 @@ export function Chat() {
           }
 
           case EventType.RUN_FINISHED:
-            setTimeline((prev) => prev.filter((e) => !(e.kind === 'status' && e.status === 'running')));
+            setTimeline((prev) =>
+              prev.filter((e) => !(e.kind === 'status' && e.status === 'running')),
+            );
             break;
 
           case EventType.RUN_ERROR: {
             const ev = event as RunErrorEvent;
             setTimeline((prev) => [
               ...prev.filter((e) => !(e.kind === 'status' && e.status === 'running')),
-              { id: nextId(), kind: 'status', status: 'error', statusText: ev.message ?? 'Unknown error' },
+              {
+                id: nextId(),
+                kind: 'status',
+                status: 'error',
+                statusText: ev.message ?? 'Unknown error',
+              },
             ]);
             break;
           }
@@ -271,7 +295,9 @@ export function Chat() {
         // HttpAgent already appended the assistant message — we only need to add tool results.
         // Find the assistant message it appended (last assistant msg) and update its toolCalls
         // so the server can reconstruct the tool_use blocks from it.
-        const lastAssistantIdx = [...agent.messages].reverse().findIndex((m) => m.role === 'assistant');
+        const lastAssistantIdx = [...agent.messages]
+          .reverse()
+          .findIndex((m) => m.role === 'assistant');
         if (lastAssistantIdx !== -1) {
           const idx = agent.messages.length - 1 - lastAssistantIdx;
           const existing = agent.messages[idx] as AssistantMessage;
@@ -314,9 +340,14 @@ export function Chat() {
   const renderEntry = (entry: TimelineEntry) => {
     if (entry.kind === 'status') {
       return (
-        <Box key={entry.id} sx={{ display: 'flex', alignItems: 'center', gap: 1, py: 0.5, opacity: 0.7 }}>
+        <Box
+          key={entry.id}
+          sx={{ display: 'flex', alignItems: 'center', gap: 1, py: 0.5, opacity: 0.7 }}
+        >
           {entry.status === 'running' && <CircularProgress size={14} />}
-          {entry.status === 'done' && <CheckCircleIcon sx={{ fontSize: 14, color: 'success.main' }} />}
+          {entry.status === 'done' && (
+            <CheckCircleIcon sx={{ fontSize: 14, color: 'success.main' }} />
+          )}
           {entry.status === 'error' && <ErrorIcon sx={{ fontSize: 14, color: 'error.main' }} />}
           <Typography variant="caption">{entry.statusText}</Typography>
         </Box>
@@ -325,7 +356,16 @@ export function Chat() {
 
     if (entry.kind === 'tool') {
       return (
-        <Box key={entry.id} sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, alignSelf: 'flex-start', maxWidth: '70%' }}>
+        <Box
+          key={entry.id}
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 0.5,
+            alignSelf: 'flex-start',
+            maxWidth: '70%',
+          }}
+        >
           <Paper
             elevation={0}
             sx={{
@@ -336,18 +376,26 @@ export function Chat() {
             }}
           >
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-              {entry.status === 'running'
-                ? <CircularProgress size={14} color="warning" />
-                : <BuildIcon sx={{ fontSize: 14, color: 'text.secondary' }} />}
+              {entry.status === 'running' ? (
+                <CircularProgress size={14} color="warning" />
+              ) : (
+                <BuildIcon sx={{ fontSize: 14, color: 'text.secondary' }} />
+              )}
               <Chip label={entry.toolName} size="small" variant="outlined" />
             </Box>
             {entry.toolArgs && (
-              <Typography variant="caption" sx={{ fontFamily: 'monospace', display: 'block', opacity: 0.75 }}>
+              <Typography
+                variant="caption"
+                sx={{ fontFamily: 'monospace', display: 'block', opacity: 0.75 }}
+              >
                 args: {entry.toolArgs}
               </Typography>
             )}
             {entry.toolResult && (
-              <Typography variant="caption" sx={{ fontFamily: 'monospace', display: 'block', mt: 0.5, color: 'success.main' }}>
+              <Typography
+                variant="caption"
+                sx={{ fontFamily: 'monospace', display: 'block', mt: 0.5, color: 'success.main' }}
+              >
                 result: {entry.toolResult}
               </Typography>
             )}
@@ -368,8 +416,12 @@ export function Chat() {
           ...(entry.role === 'user' && { color: 'secondary.contrastText' }),
         }}
       >
-        <Typography variant="caption" sx={{ opacity: 0.7 }}>{entry.role}</Typography>
-        <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>{entry.text}</Typography>
+        <Typography variant="caption" sx={{ opacity: 0.7 }}>
+          {entry.role}
+        </Typography>
+        <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
+          {entry.text}
+        </Typography>
       </Paper>
     );
   };

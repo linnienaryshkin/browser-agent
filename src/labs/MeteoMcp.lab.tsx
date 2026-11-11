@@ -110,9 +110,17 @@ async function mcpCall(method: string, params?: Record<string, unknown>) {
 
   // SSE responses are newline-separated "data: <json>" lines; pick the first with result/error.
   const text = await res.text();
-  const dataLines = text.split('\n').filter(l => l.trimStart().startsWith('data:'));
-  const parsed = dataLines.map(l => { try { return JSON.parse(l.replace(/^\s*data:\s*/, '')); } catch { return null; } });
-  return parsed.find(p => p?.result !== undefined || p?.error !== undefined) ?? parsed.at(-1) ?? null;
+  const dataLines = text.split('\n').filter((l) => l.trimStart().startsWith('data:'));
+  const parsed = dataLines.map((l) => {
+    try {
+      return JSON.parse(l.replace(/^\s*data:\s*/, ''));
+    } catch {
+      return null;
+    }
+  });
+  return (
+    parsed.find((p) => p?.result !== undefined || p?.error !== undefined) ?? parsed.at(-1) ?? null
+  );
 }
 
 const LOCAL_TOOLS: Anthropic.Tool[] = [
