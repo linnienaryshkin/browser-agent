@@ -1,9 +1,16 @@
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 import { mcpThemeMiddleware } from './src/mcp-theme-server'
 import { mcpCanvasMiddleware } from './src/mcp-canvas-server'
+import { aguiMiddleware } from './src/agui-server'
 
-export default defineConfig({
+export default defineConfig(({ mode }) => {
+  // loadEnv reads .env / .env.local and exposes all vars (no prefix filter)
+  // to process.env so server-side middleware code can access them.
+  const env = loadEnv(mode, process.cwd(), '')
+  process.env.ANTHROPIC_API_KEY = env.ANTHROPIC_API_KEY
+
+  return {
   plugins: [
     react(),
     {
@@ -18,6 +25,14 @@ export default defineConfig({
       name: 'mcp-canvas-server',
       configureServer(server) {
         server.middlewares.use(mcpCanvasMiddleware());
+      },
+    },
+    {
+      // AG-UI server — real AG-UI HTTP endpoint at POST /agui
+      // Streams typed AG-UI SSE events backed by Anthropic server-side
+      name: 'agui-server',
+      configureServer(server) {
+        server.middlewares.use(aguiMiddleware());
       },
     },
   ],
@@ -58,4 +73,5 @@ export default defineConfig({
       },
     },
   },
+  }
 })
